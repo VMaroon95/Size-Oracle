@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Size-Oracle</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🔮 Size-Oracle</h1>
+      <p class="subtitle">Universal Size Advisor</p>
+    </header>
+
+    <div id="status" class="status status--empty">No profile yet</div>
+
+    <!-- Unit Toggle -->
+    <div class="unit-toggle">
+      <button id="btn-inches" class="unit-btn unit-btn--active" data-unit="in">Inches</button>
+      <button id="btn-cm" class="unit-btn" data-unit="cm">CM</button>
+    </div>
+
+    <!-- Gender Selector -->
+    <div class="gender-selector">
+      <button id="btn-mens" class="gender-btn gender-btn--active" data-gender="mens">Men's</button>
+      <button id="btn-womens" class="gender-btn" data-gender="womens">Women's</button>
+    </div>
+
+    <!-- Measurement Inputs -->
+    <div class="inputs">
+      <div class="input-group">
+        <label for="chest">Chest <span class="unit-label">(in)</span></label>
+        <input type="number" id="chest" step="0.5" min="0" placeholder="e.g. 40">
+      </div>
+      <div class="input-group">
+        <label for="waist">Waist <span class="unit-label">(in)</span></label>
+        <input type="number" id="waist" step="0.5" min="0" placeholder="e.g. 34">
+      </div>
+      <div class="input-group">
+        <label for="hips">Hips <span class="unit-label">(in)</span></label>
+        <input type="number" id="hips" step="0.5" min="0" placeholder="e.g. 40">
+      </div>
+      <div class="input-group">
+        <label for="inseam">Inseam <span class="unit-label">(in)</span></label>
+        <input type="number" id="inseam" step="0.5" min="0" placeholder="e.g. 32">
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button id="save-btn" class="btn btn--primary">💾 Save Profile</button>
+      <button id="clear-btn" class="btn btn--danger">🗑️ Clear Data</button>
+    </div>
+
+    <!-- Saved Measurements Display -->
+    <div id="saved-measurements" class="saved-measurements hidden">
+      <h3>📏 Saved Measurements</h3>
+      <div id="saved-data"></div>
+    </div>
+
+    <footer>
+      <p>🔒 All data stored locally. Nothing leaves your device.</p>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

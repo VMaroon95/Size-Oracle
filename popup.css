@@ -1,0 +1,219 @@
+/* Size-Oracle Popup Styles — Dark Theme with Blue Accents */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 340px;
+  min-height: 480px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+}
+
+.container {
+  padding: 20px;
+}
+
+/* Header */
+header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+header h1 {
+  font-size: 22px;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: #8888aa;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+/* Status Indicator */
+.status {
+  text-align: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+
+.status--saved {
+  background: rgba(46, 204, 113, 0.15);
+  color: #2ecc71;
+  border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.status--empty {
+  background: rgba(136, 136, 170, 0.1);
+  color: #8888aa;
+  border: 1px solid rgba(136, 136, 170, 0.2);
+}
+
+/* Unit & Gender Toggles */
+.unit-toggle,
+.gender-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.unit-btn,
+.gender-btn {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #2d2d4a;
+  border-radius: 6px;
+  background: #16213e;
+  color: #8888aa;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.unit-btn:hover,
+.gender-btn:hover {
+  border-color: #4a8cff;
+  color: #c0c0e0;
+}
+
+.unit-btn--active,
+.gender-btn--active {
+  background: #4a8cff;
+  color: #ffffff;
+  border-color: #4a8cff;
+}
+
+/* Input Groups */
+.inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-group label {
+  font-size: 12px;
+  color: #aaaacc;
+  font-weight: 500;
+}
+
+.unit-label {
+  color: #6666aa;
+}
+
+.input-group input {
+  padding: 10px;
+  border: 1px solid #2d2d4a;
+  border-radius: 6px;
+  background: #16213e;
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.input-group input:focus {
+  border-color: #4a8cff;
+}
+
+.input-group input::placeholder {
+  color: #555577;
+}
+
+/* Buttons */
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn--primary {
+  background: #4a8cff;
+  color: #ffffff;
+}
+
+.btn--primary:hover {
+  background: #3a7cef;
+  transform: translateY(-1px);
+}
+
+.btn--danger {
+  background: #2d2d4a;
+  color: #ff6b6b;
+}
+
+.btn--danger:hover {
+  background: #3d2d3a;
+}
+
+/* Saved Measurements */
+.saved-measurements {
+  background: #16213e;
+  border: 1px solid #2d2d4a;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.saved-measurements h3 {
+  font-size: 13px;
+  color: #aaaacc;
+  margin-bottom: 8px;
+}
+
+.saved-measurements .measurement-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 13px;
+  color: #c0c0e0;
+}
+
+.saved-measurements .measurement-row span:last-child {
+  color: #4a8cff;
+  font-weight: 600;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding-top: 8px;
+  border-top: 1px solid #2d2d4a;
+}
+
+footer p {
+  font-size: 11px;
+  color: #666688;
+}
