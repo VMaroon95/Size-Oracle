@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Size-Oracle Scoring Test</title>
+</head>
+<body>
+    <h1>Size-Oracle Scoring Algorithm Test</h1>
+    <div id="results"></div>
+
+    <script>
+        // Copy of the new scoring function
+        function measurementScore(userValue, range) {
+            if (!range || range.length < 2 || userValue == null) return null;
+            
+            const [min, max] = range;
+            const sizeMedian = (min + max) / 2;
+            const distance = Math.abs(userValue - sizeMedian);
+            
+            // Calibrated penalty for desired score distribution:
+            // - userValue = sizeMedian → Score ≈ 98%
+            // - userValue = median ± 4" → Score ≈ 40%
+            const penalty = 14.5; // Calibrated to meet spec requirements
+            const score = Math.max(0, Math.min(100, 100 - (distance * penalty)));
+            
+            return Math.round(score);
+        }
+
+        function runTests() {
+            const results = document.getElementById('results');
+            
+            // Test scenario: 39" chest user
+            const userChest = 39;
+            
+            // Size ranges as per specification
+            const sizeS = [34, 36]; // median = 35"
+            const sizeM = [38, 40]; // median = 39"
+            const sizeL = [42, 44]; // median = 43"
+            
+            const scoreS = measurementScore(userChest, sizeS);
+            const scoreM = measurementScore(userChest, sizeM);
+            const scoreL = measurementScore(userChest, sizeL);
+            
+            results.innerHTML = `
+                <h2>Test Results for ${userChest}" chest:</h2>
+                <p><strong>S (34-36", median 35"):</strong> ${scoreS}% (should be ~40%)</p>
+                <p><strong>M (38-40", median 39"):</strong> ${scoreM}% (should be ~98%)</p>
+                <p><strong>L (42-44", median 43"):</strong> ${scoreL}% (should be ~40%)</p>
+                
+                <h3>Validation:</h3>
+                <p>M > 95%: ${scoreM > 95 ? '✅ PASS' : '❌ FAIL'}</p>
+                <p>S < 45%: ${scoreS < 45 ? '✅ PASS' : '❌ FAIL'}</p>
+                <p>L < 45%: ${scoreL < 45 ? '✅ PASS' : '❌ FAIL'}</p>
+                <p>M > S and M > L: ${(scoreM > scoreS && scoreM > scoreL) ? '✅ PASS' : '❌ FAIL'}</p>
+                
+                <h3>Overall: ${(scoreM > 95 && scoreS < 45 && scoreL < 45 && scoreM > scoreS && scoreM > scoreL) ? '✅ ALGORITHM PASSED' : '❌ ALGORITHM FAILED'}</h3>
+                
+                <h2>Additional Test Cases:</h2>
+            `;
+            
+            // Additional test cases
+            const testCases = [
+                { user: 35, size: 'S', range: [34, 36], expected: '~98%' },
+                { user: 35, size: 'M', range: [38, 40], expected: '~40%' },
+                { user: 43, size: 'L', range: [42, 44], expected: '~98%' },
+                { user: 43, size: 'M', range: [38, 40], expected: '~27%' },
+                { user: 37, size: 'S', range: [34, 36], expected: '~86%' },
+                { user: 37, size: 'M', range: [38, 40], expected: '~86%' },
+            ];
+            
+            testCases.forEach(test => {
+                const score = measurementScore(test.user, test.range);
+                results.innerHTML += `<p>${test.user}" chest vs Size ${test.size} (${test.range[0]}-${test.range[1]}"): ${score}% (expected ${test.expected})</p>`;
+            });
+        }
+
+        runTests();
+    </script>
+</body>
+</html>

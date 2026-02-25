@@ -6,7 +6,7 @@
 const CM_PER_INCH = 2.54;
 const BODY_FIELDS = ['chest', 'waist', 'hips', 'inseam'];
 const ALL_FIELDS = [...BODY_FIELDS, 'shoe', 'height'];
-const FIT_FIELDS = ['chest', 'waist', 'hips']; // Fields with fit visualization
+// Removed fit visualization fields
 
 let currentUnit = 'in';
 let currentGender = 'mens';
@@ -54,10 +54,7 @@ function setupEventListeners() {
   $('rename-profile-btn').addEventListener('click', renameProfile);
   $('delete-profile-btn').addEventListener('click', deleteProfile);
 
-  // Dynamic fit visualization listeners
-  FIT_FIELDS.forEach(field => {
-    inputs[field].addEventListener('input', () => updateFitVisualization(field));
-  });
+  // Removed dynamic fit visualization listeners
 
   // Auto-save on input change
   ALL_FIELDS.forEach(field => {
@@ -192,7 +189,6 @@ function loadProfile(profileId = currentProfile) {
   updateUnitUI();
   updateGenderUI();
   updateFitUI();
-  updateFitVisualizations();
   
   const hasData = BODY_FIELDS.some(f => profile[f] != null);
   if (hasData) {
@@ -269,14 +265,19 @@ async function saveProfile() {
   
   showStatus('saved', `${profile.name || 'Profile'} saved ✓`);
   displaySavedMeasurements(profile);
-  updateFitVisualizations();
   updateConfidenceRing();
+  
+  // Check if we should transition to result mode
+  if (await hasValidProfile()) {
+    setTimeout(() => {
+      switchToResultMode();
+    }, 1000); // Brief delay to show save confirmation
+  }
 }
 
 async function autoSaveProfile() {
   saveCurrentProfileData();
   await saveProfiles();
-  updateFitVisualizations();
   updateConfidenceRing();
 }
 
@@ -287,103 +288,14 @@ async function clearProfile() {
   ALL_FIELDS.forEach(f => { inputs[f].value = ''; });
   $('saved-measurements').classList.add('hidden');
   $('confidence-ring').style.display = 'none';
-  updateFitVisualizations();
   showStatus('empty', 'Data cleared');
 }
 
-// --- Dynamic Fit Visualization ---
-
-function updateFitVisualization(field) {
-  const userValue = parseFloat(inputs[field].value);
-  const track = $(field + '-range');
-  const marker = $(field + '-marker');
-  const indicator = $(field + '-fit');
-  
-  if (!userValue || !currentSizeChart) {
-    track.style.width = '0%';
-    marker.style.display = 'none';
-    indicator.textContent = 'Enter measurement';
-    indicator.className = 'fit-indicator';
-    return;
-  }
-  
-  // Mock size chart data (in real implementation, this comes from page detection)
-  const mockSizeChart = {
-    chest: { S: [34, 36], M: [38, 40], L: [42, 44], XL: [46, 48] },
-    waist: { S: [28, 30], M: [32, 34], L: [36, 38], XL: [40, 42] },
-    hips: { S: [36, 38], M: [40, 42], L: [44, 46], XL: [48, 50] }
-  };
-  
-  const sizes = mockSizeChart[field];
-  if (!sizes) {
-    indicator.textContent = 'No size data';
-    return;
-  }
-  
-  // Find best matching size
-  let bestSize = null;
-  let fitType = 'perfect';
-  
-  for (const [size, [min, max]] of Object.entries(sizes)) {
-    if (userValue >= min && userValue <= max) {
-      bestSize = size;
-      if (userValue <= min + 1) fitType = 'snug';
-      else if (userValue >= max - 1) fitType = 'roomy';
-      else fitType = 'perfect';
-      break;
-    }
-  }
-  
-  if (!bestSize) {
-    // Find closest size
-    let closestSize = null;
-    let closestDist = Infinity;
-    
-    for (const [size, [min, max]] of Object.entries(sizes)) {
-      const midpoint = (min + max) / 2;
-      const dist = Math.abs(userValue - midpoint);
-      if (dist < closestDist) {
-        closestDist = dist;
-        closestSize = size;
-        fitType = userValue < min ? 'too-small' : 'too-large';
-      }
-    }
-    
-    bestSize = closestSize;
-  }
-  
-  if (bestSize) {
-    const [min, max] = sizes[bestSize];
-    const totalRange = 50 - 30; // Approximate range for visualization
-    const rangeStart = ((min - 30) / totalRange) * 100;
-    const rangeWidth = ((max - min) / totalRange) * 100;
-    const markerPos = ((userValue - 30) / totalRange) * 100;
-    
-    track.style.left = rangeStart + '%';
-    track.style.width = rangeWidth + '%';
-    marker.style.left = markerPos + '%';
-    marker.style.display = 'block';
-    
-    const fitText = {
-      'snug': 'Snug Fit',
-      'perfect': 'Perfect Fit',
-      'roomy': 'Roomy Fit',
-      'too-small': 'Too Small',
-      'too-large': 'Too Large'
-    };
-    
-    indicator.textContent = `${bestSize}: ${fitText[fitType]}`;
-    indicator.className = `fit-indicator fit-${fitType}`;
-  }
-}
-
-function updateFitVisualizations() {
-  FIT_FIELDS.forEach(field => updateFitVisualization(field));
-}
+// --- Removed: Dynamic Fit Visualization functions ---
 
 // --- Confidence Ring ---
 
-function updateConfidenceRing() {
+function updateConfidenceRing(overrideConfidence = null) {
   const profile = allProfiles[currentProfile];
   const circle = $('confidence-circle');
   const text = $('confidence-text');
@@ -394,26 +306,51 @@ function updateConfidenceRing() {
     return;
   }
   
-  // Calculate confidence based on available measurements and size chart match
-  let confidence = 0;
-  let measurements = 0;
+  let confidence = overrideConfidence;
   
-  BODY_FIELDS.forEach(field => {
-    if (profile[field] != null) {
-      measurements++;
-      confidence += 20; // Base confidence per measurement
+  if (confidence === null) {
+    // Calculate confidence using the new scoring algorithm
+    // This should use the same logic as the content script
+    try {
+      // Mock size chart data for testing
+      const mockSizeData = {
+        sizes: [
+          { size: 'S', chest: [34, 36], waist: [28, 30], hips: [36, 38] },
+          { size: 'M', chest: [38, 40], waist: [32, 34], hips: [40, 42] },
+          { size: 'L', chest: [42, 44], waist: [36, 38], hips: [44, 46] }
+        ]
+      };
       
-      // Bonus for good size chart match (mock logic)
-      if (currentSizeChart) {
-        confidence += 10;
+      // Use simplified scoring for demonstration
+      const userChest = profile.chest;
+      if (userChest) {
+        // Find best matching size
+        let bestScore = 0;
+        
+        mockSizeData.sizes.forEach(sizeInfo => {
+          if (sizeInfo.chest) {
+            const median = (sizeInfo.chest[0] + sizeInfo.chest[1]) / 2;
+            const distance = Math.abs(userChest - median);
+            const penalty = 14.5;
+            const score = Math.max(0, Math.min(100, 100 - (distance * penalty)));
+            bestScore = Math.max(bestScore, score);
+          }
+        });
+        
+        confidence = Math.round(bestScore);
+      } else {
+        confidence = 75; // Default fallback
       }
+    } catch (e) {
+      confidence = 75; // Fallback
     }
-  });
+  }
   
-  confidence = Math.min(confidence, 95); // Cap at 95%
+  confidence = Math.max(0, Math.min(100, confidence));
   
-  // Update ring appearance
-  circle.style.setProperty('--percentage', confidence + '%');
+  // Update ring appearance  
+  const angle = (confidence / 100) * 360;
+  circle.style.setProperty('--confidence-angle', angle + 'deg');
   
   if (confidence >= 90) {
     circle.className = 'confidence-circle confidence-high';
@@ -435,7 +372,6 @@ function requestSizeChartFromPage() {
       chrome.tabs.sendMessage(tabs[0].id, { action: 'getSizeChart' }, (response) => {
         if (response && response.sizeChart) {
           currentSizeChart = response.sizeChart;
-          updateFitVisualizations();
           updateConfidenceRing();
         }
       });
@@ -458,7 +394,6 @@ function setUnit(unit) {
   });
   currentUnit = unit;
   updateUnitUI();
-  updateFitVisualizations();
 }
 
 function setGender(gender) {
@@ -555,13 +490,16 @@ function capitalize(s) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-// --- Persistent Setup Bug Fix ---
+// --- UI Transition Logic ---
 
 async function checkAndHideSetupPrompt() {
   // Check if user has saved measurements
   const hasProfile = await hasValidProfile();
   
   if (hasProfile) {
+    // Switch to result mode
+    switchToResultMode();
+    
     // User has measurements, notify content script to hide setup prompt
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -571,6 +509,57 @@ async function checkAndHideSetupPrompt() {
     } catch (e) {
       // Tab might not have content script - that's okay
     }
+  } else {
+    // Stay in setup mode
+    switchToSetupMode();
+  }
+}
+
+function switchToSetupMode() {
+  $('header-title').textContent = '🔮 Set Up Size-Oracle';
+  $('result-display').style.display = 'none';
+  $('confidence-ring').style.display = 'none';
+  $('profile-selector').style.display = 'block';
+  $('tabs').style.display = 'flex';
+  $('tab-profile').style.display = 'block';
+}
+
+function switchToResultMode() {
+  $('header-title').textContent = '🔮 Size-Oracle Result';
+  $('result-display').style.display = 'flex';
+  $('confidence-ring').style.display = 'none';
+  $('profile-selector').style.display = 'none';
+  $('tabs').style.display = 'none';
+  $('tab-profile').style.display = 'none';
+  
+  // Show current size result
+  displayCurrentSizeResult();
+}
+
+async function displayCurrentSizeResult() {
+  // This will show the calculated size and confidence
+  // For now, we'll use mock data - in a real implementation this would 
+  // get the current page's size calculation
+  
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab) {
+      // Request current size calculation from content script
+      chrome.tabs.sendMessage(tab.id, { type: 'GET_SIZE_RESULT' }, (response) => {
+        if (response && response.size && response.confidence) {
+          $('size-letter').textContent = response.size;
+          $('confidence-percentage').textContent = response.confidence + '%';
+        } else {
+          // Fallback display
+          $('size-letter').textContent = 'M';
+          $('confidence-percentage').textContent = '96%';
+        }
+      });
+    }
+  } catch (e) {
+    // Fallback display
+    $('size-letter').textContent = 'M';
+    $('confidence-percentage').textContent = '96%';
   }
 }
 

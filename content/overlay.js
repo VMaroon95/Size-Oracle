@@ -114,8 +114,8 @@ window.SizeOracle = window.SizeOracle || {};
 
     priceBadgeEl = document.createElement('span');
     priceBadgeEl.className = 'so-price-badge';
-    priceBadgeEl.textContent = `(${result.size}) ${Math.round(result.confidence)}%`;
-    priceBadgeEl.title = `Size-Oracle: ${result.size} with ${Math.round(result.confidence)}% confidence`;
+    priceBadgeEl.textContent = `(Size ${result.recommended}: ${Math.round(result.confidence)}%)`;
+    priceBadgeEl.title = `Size-Oracle: ${result.recommended} with ${Math.round(result.confidence)}% confidence`;
 
     // Insert after the price element
     priceElement.parentNode.insertBefore(priceBadgeEl, priceElement.nextSibling);

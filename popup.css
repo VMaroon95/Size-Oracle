@@ -70,6 +70,39 @@ header h1 {
   border: 1px solid #3c4043;
 }
 
+/* Simplified Result Display */
+.result-display {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  margin-bottom: 16px;
+}
+
+.size-letter {
+  font-size: 64px;
+  font-weight: 700;
+  color: #8ab4f8;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.confidence-percentage {
+  font-size: 28px;
+  font-weight: 600;
+  color: #e8eaed;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.confidence-label {
+  font-size: 12px;
+  color: #9aa0a6;
+  font-weight: 400;
+}
+
 /* Confidence Ring */
 .confidence-ring {
   display: flex;
@@ -264,78 +297,10 @@ header h1 {
   margin-bottom: 8px;
 }
 
-/* Fit Visualizations */
-.fit-visualizations {
-  margin-bottom: 16px;
-}
-
-.fit-slider {
-  margin-bottom: 12px;
-}
-
-.fit-slider-label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-  font-size: 13px;
-  color: #e8eaed;
-}
-
-.fit-slider-label span {
-  font-weight: 500;
-}
-
+/* Unit label styling */
 .unit-label {
   color: #9aa0a6;
   font-weight: 400;
-}
-
-.fit-slider-label input {
-  background: #292a2d;
-  border: 1px solid #3c4043;
-  border-radius: 4px;
-  color: #e8eaed;
-  padding: 4px 6px;
-  font-family: inherit;
-  font-size: 11px;
-}
-
-.fit-slider-label input:focus {
-  outline: none;
-  border-color: #8ab4f8;
-}
-
-.slider-track {
-  position: relative;
-  height: 6px;
-  background: #3c4043;
-  border-radius: 3px;
-  margin-bottom: 4px;
-}
-
-.size-range {
-  position: absolute;
-  height: 100%;
-  background: #8ab4f8;
-  border-radius: 3px;
-  opacity: 0.7;
-}
-
-.user-marker {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  background: #e8eaed;
-  border: 2px solid #202124;
-  border-radius: 50%;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.fit-indicator {
-  font-size: 11px;
-  color: #9aa0a6;
 }
 
 /* Input Groups */

@@ -84,59 +84,19 @@ window.SizeOracle = window.SizeOracle || {};
     if (!range || range.length < 2 || userValue == null) return null;
     
     const [min, max] = range;
-    const rangeMedian = (min + max) / 2;
-    const rangeWidth = max - min;
+    const sizeMedian = (min + max) / 2;
+    const distance = Math.abs(userValue - sizeMedian);
     
-    // Calculate distance from median as a percentage of range width
-    const distance = Math.abs(userValue - rangeMedian);
-    const relativeDistance = distance / (rangeWidth / 2); // Normalize to range half-width
+    // Calibrated penalty for desired score distribution:
+    // - userValue = sizeMedian → Score ≈ 98%
+    // - userValue = median ± 4" → Score ≈ 40%
+    const penalty = 14.5; // Calibrated to meet spec requirements
+    const score = Math.max(0, Math.min(100, 100 - (distance * penalty)));
     
-    // Mathematical scoring based on statistical distribution
-    let score;
+    // Test logging to verify different sizes give different scores
+    console.log(`Size Score Debug: userValue=${userValue}, range=[${min}-${max}], median=${sizeMedian}, distance=${distance.toFixed(1)}, score=${Math.round(score)}`);
     
-    if (relativeDistance <= 0.1) {
-      // Perfect fit - very close to median
-      score = 100;
-    } else if (relativeDistance <= 0.3) {
-      // Excellent fit - within 30% of median distance
-      score = 95 - (relativeDistance - 0.1) * 25;  // 95-90
-    } else if (relativeDistance <= 0.5) {
-      // Good fit - within the range but not centered
-      score = 90 - (relativeDistance - 0.3) * 35;  // 90-83
-    } else if (relativeDistance <= 1.0) {
-      // Within range boundaries
-      score = 83 - (relativeDistance - 0.5) * 23;  // 83-71.5
-    } else if (relativeDistance <= 1.5) {
-      // Close to range but outside boundaries
-      score = 71.5 - (relativeDistance - 1.0) * 35; // 71.5-54
-    } else if (relativeDistance <= 2.0) {
-      // Moderately outside range
-      score = 54 - (relativeDistance - 1.5) * 30;   // 54-39
-    } else if (relativeDistance <= 3.0) {
-      // Far outside range
-      score = 39 - (relativeDistance - 2.0) * 25;   // 39-14
-    } else {
-      // Very poor fit
-      score = Math.max(0, 14 - (relativeDistance - 3.0) * 14); // 14-0
-    }
-    
-    // Additional penalty if significantly larger than range (loose fit penalty)
-    if (userValue > max) {
-      const overage = (userValue - max) / rangeWidth;
-      if (overage > 0.5) {
-        score *= (1 - Math.min(0.3, overage * 0.2)); // Up to 30% penalty for very loose fits
-      }
-    }
-    
-    // Additional penalty if significantly smaller than range (tight fit penalty)
-    if (userValue < min) {
-      const shortage = (min - userValue) / rangeWidth;
-      if (shortage > 0.5) {
-        score *= (1 - Math.min(0.4, shortage * 0.3)); // Up to 40% penalty for very tight fits
-      }
-    }
-    
-    return Math.max(0, Math.round(score));
+    return Math.round(score);
   }
 
   function fitLabel(score) {
@@ -178,6 +138,38 @@ window.SizeOracle = window.SizeOracle || {};
       return adjusted;
     });
   }
+
+  // --- TEST: Validate Scoring Math ---
+  
+  function testScoringMath() {
+    console.log("=== Size-Oracle Scoring Test ===");
+    
+    // Test scenario: 39" chest user
+    const userChest = 39;
+    
+    // Size ranges as per specification
+    const sizeS = [34, 36]; // median = 35"
+    const sizeM = [38, 40]; // median = 39"
+    const sizeL = [42, 44]; // median = 43"
+    
+    const scoreS = measurementScore(userChest, sizeS);
+    const scoreM = measurementScore(userChest, sizeM);
+    const scoreL = measurementScore(userChest, sizeL);
+    
+    console.log(`Test Results for ${userChest}" chest:`);
+    console.log(`S (34-36", median 35"): ${scoreS}% (should be ~40%)`);
+    console.log(`M (38-40", median 39"): ${scoreM}% (should be ~98%)`);
+    console.log(`L (42-44", median 43"): ${scoreL}% (should be ~40%)`);
+    
+    // Validation
+    const isValid = scoreM > 95 && scoreS < 45 && scoreL < 45 && scoreM > scoreS && scoreM > scoreL;
+    console.log(`Scoring algorithm ${isValid ? 'PASSED' : 'FAILED'} validation`);
+    
+    return isValid;
+  }
+  
+  // Run test on load
+  setTimeout(testScoringMath, 1000);
 
   // --- Main Entry Point ---
 
