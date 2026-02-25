@@ -16,8 +16,36 @@ window.SizeOracle = window.SizeOracle || {};
 
   // --- Initialization ---
 
+  // Simple built-in scoring so overlay never shows "undefined"
+  function calculateScore(userValue, range) {
+    if (!userValue || !range || range.length < 2) return 0;
+    const median = (range[0] + range[1]) / 2;
+    const distance = Math.abs(userValue - median);
+    return Math.max(0, Math.min(100, Math.round(100 - distance * 14.5)));
+  }
+
+  function findBestFromChart(profile, chart) {
+    let bestSize = null;
+    let bestScore = -1;
+    for (const entry of chart) {
+      let total = 0, count = 0;
+      for (const field of ['chest', 'waist', 'hips']) {
+        if (profile[field] && entry[field]) {
+          total += calculateScore(profile[field], entry[field]);
+          count++;
+        }
+      }
+      const score = count > 0 ? Math.round(total / count) : 0;
+      if (score > bestScore) {
+        bestScore = score;
+        bestSize = entry.size;
+      }
+    }
+    return bestSize ? { recommended: bestSize, confidence: bestScore } : null;
+  }
+
   async function init() {
-    await sleep(1000);
+    await sleep(1500);
 
     const profile = await getProfile();
     isSetupComplete = profile && Object.keys(profile).length > 0;
@@ -27,26 +55,31 @@ window.SizeOracle = window.SizeOracle || {};
       return;
     }
 
-    const sizeData = await window.SizeOracle.detectSizeChart?.();
-    let result = window.SizeOracle.findBestSize?.(profile, sizeData);
+    let result = null;
 
-    // Fallback: calculate directly using universal sizes if findBestSize returned null
-    if (!result && profile.chest) {
+    // Try using the oracle engine first
+    try {
+      const sizeData = await window.SizeOracle.detectSizeChart?.();
+      result = window.SizeOracle.findBestSize?.(profile, sizeData);
+    } catch (e) {
+      console.log('[Size Oracle] Engine error, using fallback:', e);
+    }
+
+    // Fallback: calculate directly with universal sizes
+    if (!result || !result.recommended) {
       const gender = profile.gender || 'mens';
-      const chart = window.SizeOracle.universalSizes?.getChart(gender, 'tops');
+      const chart = window.SizeOracle.universalSizes?.getChart?.(gender, 'tops');
       if (chart?.length) {
-        result = window.SizeOracle.findBestSize?.(profile, { sizes: chart, source: 'estimated' });
+        result = findBestFromChart(profile, chart);
       }
     }
 
-    if (!result) return;
+    if (!result || !result.recommended) return;
 
     currentResult = result;
     renderFAB(result);
     renderPriceBadge(result);
-    enhanceSizeSelector(result, sizeData);
     updateBackgroundBadge(result.confidence, result.recommended);
-    saveToCacheAndHistory(result);
   }
 
   // --- Profile & Communication ---
@@ -85,9 +118,11 @@ window.SizeOracle = window.SizeOracle || {};
     
     fabEl = document.createElement('button');
     fabEl.className = 'so-fab';
+    const sizeLabel = result.recommended || result.size || '?';
+    const confLabel = Math.round(result.confidence || 0);
     fabEl.innerHTML = `
-      <div class="so-fab-size">${result.recommended || result.size || '?'}</div>
-      <div class="so-fab-confidence">${Math.round(result.confidence || 0)}%</div>
+      <div class="so-fab-size">${sizeLabel}</div>
+      <div class="so-fab-confidence">${confLabel}%</div>
     `;
     
     fabEl.addEventListener('click', (e) => {
