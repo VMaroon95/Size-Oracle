@@ -16,7 +16,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
 
     case 'UPDATE_CONFIDENCE':
-      updateBadge(message.confidence, sender.tab?.id);
+      updateBadge(message.confidence, sender.tab?.id, message.size);
       break;
 
     case 'OPEN_POPUP':
@@ -60,7 +60,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
 
     case 'UPDATE_BADGE':
-      updateBadge(message.confidence, sender.tab?.id);
+      updateBadge(message.confidence, sender.tab?.id, message.size);
       break;
 
     case 'CACHE_RESULT':
@@ -98,23 +98,20 @@ async function handleGetProfiles(sendResponse) {
 
 // --- Badge ---
 
-function updateBadge(confidence, tabId) {
+function updateBadge(confidence, tabId, size = 'M') {
   if (tabId == null) return;
 
-  let color, text;
-  if (confidence >= 80) {
-    color = '#2ecc71';
-    text = '✓';
-  } else if (confidence >= 60) {
-    color = '#f1c40f';
-    text = '~';
-  } else {
-    color = '#e74c3c';
-    text = '!';
-  }
+  let color = '#8ab4f8'; // Chrome Blue
+  let text = size;
 
   chrome.action.setBadgeBackgroundColor({ color, tabId });
   chrome.action.setBadgeText({ text, tabId });
+  
+  // Set tooltip to show full size oracle result
+  chrome.action.setTitle({
+    title: `Size Oracle: ${size} (${confidence}%)`,
+    tabId
+  });
 }
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {

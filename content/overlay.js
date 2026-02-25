@@ -36,7 +36,7 @@ window.SizeOracle = window.SizeOracle || {};
     renderFAB(result);
     renderPriceBadge(result);
     enhanceSizeSelector(result, sizeData);
-    updateBackgroundBadge(result.confidence);
+    updateBackgroundBadge(result.confidence, result.recommended);
     saveToCacheAndHistory(result);
   }
 
@@ -50,10 +50,11 @@ window.SizeOracle = window.SizeOracle || {};
     });
   }
 
-  function updateBackgroundBadge(confidence) {
+  function updateBackgroundBadge(confidence, size = 'M') {
     chrome.runtime.sendMessage({
       type: 'UPDATE_BADGE',
-      confidence: Math.round(confidence)
+      confidence: Math.round(confidence),
+      size: size
     });
   }
 
@@ -114,8 +115,8 @@ window.SizeOracle = window.SizeOracle || {};
 
     priceBadgeEl = document.createElement('span');
     priceBadgeEl.className = 'so-price-badge';
-    priceBadgeEl.textContent = `(Size ${result.recommended}: ${Math.round(result.confidence)}%)`;
-    priceBadgeEl.title = `Size-Oracle: ${result.recommended} with ${Math.round(result.confidence)}% confidence`;
+    priceBadgeEl.textContent = `Size Oracle: ${result.recommended} (${Math.round(result.confidence)}%)`;
+    priceBadgeEl.title = `Size Oracle: ${result.recommended} with ${Math.round(result.confidence)}% confidence`;
 
     // Insert after the price element
     priceElement.parentNode.insertBefore(priceBadgeEl, priceElement.nextSibling);
@@ -128,7 +129,7 @@ window.SizeOracle = window.SizeOracle || {};
     
     setupBadgeEl = document.createElement('div');
     setupBadgeEl.className = 'so-setup-badge';
-    setupBadgeEl.textContent = '⚙️ Set Up Size-Oracle';
+    setupBadgeEl.textContent = 'Set Up Size Oracle';
     setupBadgeEl.title = 'Click to configure your measurements';
     
     setupBadgeEl.addEventListener('click', (e) => {
@@ -246,7 +247,7 @@ window.SizeOracle = window.SizeOracle || {};
         }
         
         currentResult = updatedResult;
-        updateBackgroundBadge(updatedResult.confidence);
+        updateBackgroundBadge(updatedResult.confidence, updatedResult.size);
       }
     }
   });

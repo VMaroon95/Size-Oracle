@@ -3,56 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Size-Oracle</title>
+  <title>Size Oracle</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <div class="container">
-    <header id="main-header">
-      <h1 id="header-title">🔮 Set Up Size-Oracle</h1>
-      <p class="subtitle" id="header-subtitle">Universal Size Advisor</p>
-      <p class="stat" id="header-stat">Supporting 100+ stores</p>
-    </header>
-
-    <div id="status" class="status status--empty">No profile yet</div>
-
-    <!-- Simplified Result Display -->
-    <div id="result-display" class="result-display" style="display: none;">
-      <div class="size-letter" id="size-letter">M</div>
-      <div class="confidence-percentage" id="confidence-percentage">96%</div>
-      <div class="confidence-label">Size Confidence</div>
-    </div>
-
-    <!-- Confidence Ring (Legacy - Hidden by default) -->
-    <div id="confidence-ring" class="confidence-ring" style="display: none;">
-      <div id="confidence-circle" class="confidence-circle">
-        <div id="confidence-text" class="confidence-text">--</div>
-        <div class="confidence-tooltip">Size prediction confidence</div>
+    <!-- Primary View: Size and Confidence -->
+    <div id="result-view" class="result-view" style="display: none;">
+      <div class="three-dot-menu" id="three-dot-menu">⋮</div>
+      <div class="size-display">
+        <div class="size-letter" id="size-letter">M</div>
+        <div class="confidence-bar">|</div>
+        <div class="confidence-percentage" id="confidence-percentage">96%</div>
       </div>
     </div>
 
-    <!-- Multi-Profile Selector -->
-    <div id="profile-selector" class="profile-selector">
-      <div class="profile-tabs">
-        <button class="profile-tab profile-tab--active" data-profile="self">Self</button>
-        <button class="profile-tab" data-profile="partner">Partner</button>
-        <button class="profile-tab" data-profile="custom" id="custom-profile-tab">Custom</button>
-      </div>
-      <div class="profile-actions">
-        <button class="profile-btn" id="add-profile-btn">+ Add</button>
-        <button class="profile-btn" id="rename-profile-btn">Rename</button>
-        <button class="profile-btn" id="delete-profile-btn">Delete</button>
-      </div>
-    </div>
+    <!-- Setup View -->
+    <div id="setup-view" class="setup-view">
+      <header>
+        <h1 id="header-title">Size Oracle</h1>
+        <p class="subtitle">Universal Size Advisor</p>
+        <p class="stat">Supporting 100+ stores</p>
+      </header>
 
-    <!-- Tabs -->
-    <div class="tabs">
-      <button class="tab tab--active" data-tab="profile">Profile</button>
-      <button class="tab" data-tab="history">History</button>
-    </div>
+      <div id="status" class="status">No profile yet</div>
 
-    <!-- Profile Tab -->
-    <div id="tab-profile" class="tab-content tab-content--active">
       <!-- Unit Toggle -->
       <div class="toggle-row">
         <button id="btn-inches" class="toggle-btn toggle-btn--active" data-unit="in">Inches</button>
@@ -65,15 +40,7 @@
         <button id="btn-womens" class="toggle-btn" data-gender="womens">Women's</button>
       </div>
 
-      <!-- Fit Preference -->
-      <div class="section-label">Preferred Fit</div>
-      <div class="toggle-row toggle-row--triple">
-        <button class="toggle-btn fit-btn" data-fit="fitted">Fitted</button>
-        <button class="toggle-btn fit-btn toggle-btn--active" data-fit="regular">Regular</button>
-        <button class="toggle-btn fit-btn" data-fit="relaxed">Relaxed</button>
-      </div>
-
-      <!-- Simplified Measurements -->
+      <!-- Measurements -->
       <div class="inputs">
         <div class="input-group">
           <label for="chest">Chest <span class="unit-label">(in)</span></label>
@@ -87,43 +54,47 @@
           <label for="hips">Hips <span class="unit-label">(in)</span></label>
           <input type="number" id="hips" step="0.5" min="0" placeholder="e.g. 40">
         </div>
-        <div class="input-group">
-          <label for="inseam">Inseam <span class="unit-label">(in)</span></label>
-          <input type="number" id="inseam" step="0.5" min="0" placeholder="e.g. 32">
-        </div>
-        <div class="input-group">
-          <label for="shoe">Shoe Size (US) <span class="optional">(optional)</span></label>
-          <input type="number" id="shoe" step="0.5" min="0" placeholder="e.g. 10">
-        </div>
-        <div class="input-group">
-          <label for="height">Height <span class="unit-label">(in)</span> <span class="optional">(opt)</span></label>
-          <input type="number" id="height" step="0.5" min="0" placeholder="e.g. 70">
-        </div>
       </div>
 
       <!-- Actions -->
       <div class="actions">
-        <button id="save-btn" class="btn btn--primary">💾 Save Profile</button>
-        <button id="clear-btn" class="btn btn--danger">🗑️ Clear</button>
+        <button id="save-btn" class="btn btn--primary">Save Profile</button>
+        <button id="clear-btn" class="btn btn--secondary">Clear</button>
       </div>
 
-      <!-- Saved Measurements Display -->
-      <div id="saved-measurements" class="saved-section hidden">
-        <h3>📏 Saved Measurements</h3>
-        <div id="saved-data"></div>
-      </div>
+      <footer>
+        <p>All data stored locally. Nothing leaves your device.</p>
+      </footer>
     </div>
 
-    <!-- History Tab -->
-    <div id="tab-history" class="tab-content">
+    <!-- Hidden Menu -->
+    <div id="hidden-menu" class="hidden-menu" style="display: none;">
+      <div class="menu-item" id="menu-saved">Saved Measurements</div>
+      <div class="menu-item" id="menu-history">Profile/History</div>
+      <div class="menu-item" id="menu-units">Unit Toggle (Inches/CM)</div>
+      <div class="menu-item" id="menu-category">Category Toggle (Men's/Women's)</div>
+      <div class="menu-item" id="menu-close">Back to Setup</div>
+    </div>
+
+    <!-- Saved Measurements View -->
+    <div id="saved-view" class="saved-view" style="display: none;">
+      <div class="view-header">
+        <button class="back-btn" id="back-from-saved">←</button>
+        <h2>Saved Measurements</h2>
+      </div>
+      <div id="saved-data" class="saved-data"></div>
+    </div>
+
+    <!-- History View -->
+    <div id="history-view" class="history-view" style="display: none;">
+      <div class="view-header">
+        <button class="back-btn" id="back-from-history">←</button>
+        <h2>Profile/History</h2>
+      </div>
       <div id="history-list" class="history-list">
         <p class="history-empty">No recommendations yet. Visit a store!</p>
       </div>
     </div>
-
-    <footer>
-      <p>🔒 All data stored locally. Nothing leaves your device.</p>
-    </footer>
   </div>
 
   <script src="popup.js"></script>

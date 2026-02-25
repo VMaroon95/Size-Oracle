@@ -1,43 +1,42 @@
-# 🔮 Size-Oracle — Universal Size Advisor v2.0
+# Size Oracle — Universal Size Advisor v3.0
 
 > A privacy-first Chrome extension that recommends your clothing size on major shopping sites — all processing happens locally on your device.
 
 <!-- ![Size-Oracle Logo](icons/icon128.png) -->
 
-## ✨ What's New in v2.0
+## What's New in v3.0
 
-### 🌟 Glassmorphism UI Overhaul
-- **Modern Design** — Sleek semi-transparent interface with blur effects
-- **Dynamic Fit Visualization** — Interactive sliders showing where your measurements sit within size ranges
-- **Confidence Ring** — Color-coded confidence indicator with hover explanations (Green: 90%+, Yellow: 70-89%, Red: <70%)
+### Minimalist UI Overhaul  
+- **Native Chrome Design** — Clean dark mode styling with system fonts
+- **Minimalist Interface** — Primary view shows only size and confidence percentage
+- **Three-dot Menu** — Hidden menu for saved measurements, history, and settings
 
-### 🧠 Smart Fit Intelligence
-- **Auto-Detection** — Automatically scans e-commerce pages for size charts and tables
-- **Contextual Fit Descriptions** — "Snug Fit", "Perfect Fit", "Roomy Fit" based on your exact position in size ranges
+### Smart Fit Intelligence
+- **Auto-Detection** — Automatically scans e-commerce pages for size charts and tables  
+- **Difference-from-Median Algorithm** — Precise scoring based on distance from size range medians
 - **Body Shape Analysis** — Personalized recommendations based on your proportions
 
-### 👥 Multi-Profile Support
-- **Multiple Users** — Save profiles for "Self", "Partner", or custom profiles
-- **Quick Switching** — Seamlessly switch between profiles for different people
-- **Individual Preferences** — Each profile maintains its own fit preferences and measurements
+### Profile Management
+- **Simple Setup** — Enter chest, waist, and hips measurements
+- **Unit Toggle** — Switch between inches and centimeters
+- **Category Toggle** — Support for both men's and women's sizes
 
 ## Features
 
 ### Core Functionality
-- **🔮 Smart Size Recommendations** — Automatically detects size charts and matches them to your measurements
-- **📏 Multi-Measurement Matching** — Compares chest, waist, hips, and inseam with weighted scoring
-- **🌐 Universal Support** — Works on 100+ shopping sites including Amazon, Zara, H&M, ASOS, SHEIN, Nike, and more
-- **🔒 100% Private** — All data stored locally in your browser. Zero network requests. Zero tracking.
+- **Smart Size Recommendations** — Automatically detects size charts and matches them to your measurements
+- **Multi-Measurement Matching** — Compares chest, waist, and hips with precise scoring
+- **Universal Support** — Works on 100+ shopping sites including Amazon, Zara, H&M, ASOS, SHEIN, Nike, and more
+- **100% Private** — All data stored locally in your browser. Zero network requests. Zero tracking.
 
 ### Advanced Features
-- **📐 Unit Conversion** — Seamlessly switch between inches and centimeters
-- **🎯 Enhanced Confidence Scoring** — See exactly how well each size matches with detailed breakdowns
-- **💡 Smart Recommendations** — Body shape-aware suggestions and fit preference guidance
-- **📊 Visual Fit Mapping** — See exactly where your measurements fall within size ranges
-- **🔄 Auto-Save** — Measurements automatically save as you type
+- **Unit Conversion** — Seamlessly switch between inches and centimeters
+- **Enhanced Confidence Scoring** — See exactly how well each size matches with detailed breakdowns
+- **Smart Recommendations** — Body shape-aware suggestions and fit preference guidance
+- **Auto-Save** — Measurements automatically save as you type
 
 ### User Experience
-- **✨ Glassmorphism Design** — Modern, elegant interface with purple crystal ball branding
+- **Chrome Native Design** — Clean dark mode interface matching Chrome's built-in styling
 - **🎪 Non-Intrusive UI** — Floating confidence indicator and expandable details
 - **👤 Profile Management** — Add, rename, and delete multiple user profiles
 - **📈 Recommendation History** — Track your past size recommendations

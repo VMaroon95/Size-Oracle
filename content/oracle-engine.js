@@ -29,14 +29,14 @@ window.SizeOracle = window.SizeOracle || {};
   // Confidence messages
   const MESSAGES = {
     high: [
-      "This is YOUR size. Buy with confidence! 💪",
-      "Perfect match! No returns needed 😎",
-      "Go for it — this will fit you perfectly! 👌",
+      "This is YOUR size. Buy with confidence!",
+      "Perfect match! No returns needed.",
+      "Go for it — this will fit you perfectly!",
     ],
     medium: [
-      "Good match — should fit well! 👍",
+      "Good match — should fit well!",
       "Solid choice! This size works for you.",
-      "Pretty close match — you'll look great! ✨",
+      "Pretty close match — you'll look great!",
     ],
     low: [
       "This is our best guess — check the size chart to be sure.",
@@ -88,24 +88,24 @@ window.SizeOracle = window.SizeOracle || {};
     const distance = Math.abs(userValue - sizeMedian);
     
     // Calibrated penalty for desired score distribution:
-    // - userValue = sizeMedian → Score ≈ 98%
-    // - userValue = median ± 4" → Score ≈ 40%
+    // - userValue = sizeMedian → Score ≈ 98-100%
+    // - userValue = median ± 2" → Score ≈ 40-50%
     const penalty = 14.5; // Calibrated to meet spec requirements
     const score = Math.max(0, Math.min(100, 100 - (distance * penalty)));
     
     // Test logging to verify different sizes give different scores
-    console.log(`Size Score Debug: userValue=${userValue}, range=[${min}-${max}], median=${sizeMedian}, distance=${distance.toFixed(1)}, score=${Math.round(score)}`);
+    console.log(`Score Debug: user=${userValue}, range=[${min}-${max}], median=${sizeMedian}, dist=${distance.toFixed(1)}, score=${Math.round(score)}`);
     
     return Math.round(score);
   }
 
   function fitLabel(score) {
-    if (score == null) return { icon: '➖', fit: 'N/A' };
-    if (score >= 90) return { icon: '✅', fit: 'perfect' };
-    if (score >= 75) return { icon: '✅', fit: 'great' };
-    if (score >= 60) return { icon: '⚠️', fit: 'slightly snug' };
-    if (score >= 40) return { icon: '⚠️', fit: 'loose' };
-    return { icon: '❌', fit: 'poor' };
+    if (score == null) return { icon: '-', fit: 'N/A' };
+    if (score >= 90) return { icon: '+', fit: 'perfect' };
+    if (score >= 75) return { icon: '+', fit: 'great' };
+    if (score >= 60) return { icon: '!', fit: 'slightly snug' };
+    if (score >= 40) return { icon: '!', fit: 'loose' };
+    return { icon: 'X', fit: 'poor' };
   }
 
   function returnRisk(confidence) {

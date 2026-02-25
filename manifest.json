@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Size-Oracle — Universal Size Advisor",
-  "version": "2.1.0",
+  "name": "Size Oracle — Universal Size Advisor",
+  "version": "3.0.0",
   "description": "Privacy-first universal clothing size advisor with improved scoring and native Chrome styling. All processing happens locally — your measurements never leave your device.",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": ["<all_urls>"],
