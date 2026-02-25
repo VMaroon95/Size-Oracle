@@ -11,52 +11,134 @@
     <header>
       <h1>🔮 Size-Oracle</h1>
       <p class="subtitle">Universal Size Advisor</p>
+      <p class="stat">Supporting 100+ stores</p>
     </header>
 
     <div id="status" class="status status--empty">No profile yet</div>
 
-    <!-- Unit Toggle -->
-    <div class="unit-toggle">
-      <button id="btn-inches" class="unit-btn unit-btn--active" data-unit="in">Inches</button>
-      <button id="btn-cm" class="unit-btn" data-unit="cm">CM</button>
-    </div>
-
-    <!-- Gender Selector -->
-    <div class="gender-selector">
-      <button id="btn-mens" class="gender-btn gender-btn--active" data-gender="mens">Men's</button>
-      <button id="btn-womens" class="gender-btn" data-gender="womens">Women's</button>
-    </div>
-
-    <!-- Measurement Inputs -->
-    <div class="inputs">
-      <div class="input-group">
-        <label for="chest">Chest <span class="unit-label">(in)</span></label>
-        <input type="number" id="chest" step="0.5" min="0" placeholder="e.g. 40">
-      </div>
-      <div class="input-group">
-        <label for="waist">Waist <span class="unit-label">(in)</span></label>
-        <input type="number" id="waist" step="0.5" min="0" placeholder="e.g. 34">
-      </div>
-      <div class="input-group">
-        <label for="hips">Hips <span class="unit-label">(in)</span></label>
-        <input type="number" id="hips" step="0.5" min="0" placeholder="e.g. 40">
-      </div>
-      <div class="input-group">
-        <label for="inseam">Inseam <span class="unit-label">(in)</span></label>
-        <input type="number" id="inseam" step="0.5" min="0" placeholder="e.g. 32">
+    <!-- Confidence Ring -->
+    <div id="confidence-ring" class="confidence-ring" style="display: none;">
+      <div id="confidence-circle" class="confidence-circle">
+        <div id="confidence-text" class="confidence-text">--</div>
+        <div class="confidence-tooltip">Size prediction confidence</div>
       </div>
     </div>
 
-    <!-- Actions -->
-    <div class="actions">
-      <button id="save-btn" class="btn btn--primary">💾 Save Profile</button>
-      <button id="clear-btn" class="btn btn--danger">🗑️ Clear Data</button>
+    <!-- Multi-Profile Selector -->
+    <div id="profile-selector" class="profile-selector">
+      <div class="profile-tabs">
+        <button class="profile-tab profile-tab--active" data-profile="self">Self</button>
+        <button class="profile-tab" data-profile="partner">Partner</button>
+        <button class="profile-tab" data-profile="custom" id="custom-profile-tab">Custom</button>
+      </div>
+      <div class="profile-actions">
+        <button class="profile-btn" id="add-profile-btn">+ Add</button>
+        <button class="profile-btn" id="rename-profile-btn">Rename</button>
+        <button class="profile-btn" id="delete-profile-btn">Delete</button>
+      </div>
     </div>
 
-    <!-- Saved Measurements Display -->
-    <div id="saved-measurements" class="saved-measurements hidden">
-      <h3>📏 Saved Measurements</h3>
-      <div id="saved-data"></div>
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab tab--active" data-tab="profile">Profile</button>
+      <button class="tab" data-tab="history">History</button>
+    </div>
+
+    <!-- Profile Tab -->
+    <div id="tab-profile" class="tab-content tab-content--active">
+      <!-- Unit Toggle -->
+      <div class="toggle-row">
+        <button id="btn-inches" class="toggle-btn toggle-btn--active" data-unit="in">Inches</button>
+        <button id="btn-cm" class="toggle-btn" data-unit="cm">CM</button>
+      </div>
+
+      <!-- Gender Selector -->
+      <div class="toggle-row">
+        <button id="btn-mens" class="toggle-btn toggle-btn--active" data-gender="mens">Men's</button>
+        <button id="btn-womens" class="toggle-btn" data-gender="womens">Women's</button>
+      </div>
+
+      <!-- Fit Preference -->
+      <div class="section-label">Preferred Fit</div>
+      <div class="toggle-row toggle-row--triple">
+        <button class="toggle-btn fit-btn" data-fit="fitted">Fitted</button>
+        <button class="toggle-btn fit-btn toggle-btn--active" data-fit="regular">Regular</button>
+        <button class="toggle-btn fit-btn" data-fit="relaxed">Relaxed</button>
+      </div>
+
+      <!-- Dynamic Fit Visualization -->
+      <div class="fit-visualizations">
+        <div class="fit-slider">
+          <div class="fit-slider-label">
+            <span>Chest <span class="unit-label">(in)</span></span>
+            <input type="number" id="chest" step="0.5" min="0" placeholder="40" style="width: 60px; font-size: 11px;">
+          </div>
+          <div class="slider-track">
+            <div id="chest-range" class="size-range"></div>
+            <div id="chest-marker" class="user-marker"></div>
+          </div>
+          <div id="chest-fit" class="fit-indicator">Enter measurement</div>
+        </div>
+
+        <div class="fit-slider">
+          <div class="fit-slider-label">
+            <span>Waist <span class="unit-label">(in)</span></span>
+            <input type="number" id="waist" step="0.5" min="0" placeholder="34" style="width: 60px; font-size: 11px;">
+          </div>
+          <div class="slider-track">
+            <div id="waist-range" class="size-range"></div>
+            <div id="waist-marker" class="user-marker"></div>
+          </div>
+          <div id="waist-fit" class="fit-indicator">Enter measurement</div>
+        </div>
+
+        <div class="fit-slider">
+          <div class="fit-slider-label">
+            <span>Hips <span class="unit-label">(in)</span></span>
+            <input type="number" id="hips" step="0.5" min="0" placeholder="40" style="width: 60px; font-size: 11px;">
+          </div>
+          <div class="slider-track">
+            <div id="hips-range" class="size-range"></div>
+            <div id="hips-marker" class="user-marker"></div>
+          </div>
+          <div id="hips-fit" class="fit-indicator">Enter measurement</div>
+        </div>
+      </div>
+
+      <!-- Additional Measurements -->
+      <div class="inputs">
+        <div class="input-group">
+          <label for="inseam">Inseam <span class="unit-label">(in)</span></label>
+          <input type="number" id="inseam" step="0.5" min="0" placeholder="e.g. 32">
+        </div>
+        <div class="input-group">
+          <label for="shoe">Shoe Size (US) <span class="optional">(optional)</span></label>
+          <input type="number" id="shoe" step="0.5" min="0" placeholder="e.g. 10">
+        </div>
+        <div class="input-group">
+          <label for="height">Height <span class="unit-label">(in)</span> <span class="optional">(opt)</span></label>
+          <input type="number" id="height" step="0.5" min="0" placeholder="e.g. 70">
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <button id="save-btn" class="btn btn--primary">💾 Save Profile</button>
+        <button id="clear-btn" class="btn btn--danger">🗑️ Clear</button>
+      </div>
+
+      <!-- Saved Measurements Display -->
+      <div id="saved-measurements" class="saved-section hidden">
+        <h3>📏 Saved Measurements</h3>
+        <div id="saved-data"></div>
+      </div>
+    </div>
+
+    <!-- History Tab -->
+    <div id="tab-history" class="tab-content">
+      <div id="history-list" class="history-list">
+        <p class="history-empty">No recommendations yet. Visit a store!</p>
+      </div>
     </div>
 
     <footer>
