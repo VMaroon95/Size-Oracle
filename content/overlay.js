@@ -28,7 +28,16 @@ window.SizeOracle = window.SizeOracle || {};
     }
 
     const sizeData = await window.SizeOracle.detectSizeChart?.();
-    const result = window.SizeOracle.findBestSize?.(profile, sizeData);
+    let result = window.SizeOracle.findBestSize?.(profile, sizeData);
+
+    // Fallback: calculate directly using universal sizes if findBestSize returned null
+    if (!result && profile.chest) {
+      const gender = profile.gender || 'mens';
+      const chart = window.SizeOracle.universalSizes?.getChart(gender, 'tops');
+      if (chart?.length) {
+        result = window.SizeOracle.findBestSize?.(profile, { sizes: chart, source: 'estimated' });
+      }
+    }
 
     if (!result) return;
 
@@ -77,8 +86,8 @@ window.SizeOracle = window.SizeOracle || {};
     fabEl = document.createElement('button');
     fabEl.className = 'so-fab';
     fabEl.innerHTML = `
-      <div class="so-fab-size">${result.size}</div>
-      <div class="so-fab-confidence">${Math.round(result.confidence)}%</div>
+      <div class="so-fab-size">${result.recommended || result.size || '?'}</div>
+      <div class="so-fab-confidence">${Math.round(result.confidence || 0)}%</div>
     `;
     
     fabEl.addEventListener('click', (e) => {
