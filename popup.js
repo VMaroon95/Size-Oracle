@@ -20,11 +20,12 @@ const $ = id => document.getElementById(id);
 const inputs = Object.fromEntries(ALL_FIELDS.map(f => [f, $(f)]));
 
 // --- Init ---
-document.addEventListener('DOMContentLoaded', () => {
-  loadProfiles();
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadProfiles();
   loadHistory();
   setupEventListeners();
   requestSizeChartFromPage();
+  await checkAndHideSetupPrompt();
 });
 
 function setupEventListeners() {
@@ -255,6 +256,17 @@ async function saveProfile() {
   }
 
   await saveProfiles();
+  
+  // Notify content script that profile has been updated
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab) {
+      chrome.tabs.sendMessage(tab.id, { type: 'PROFILE_UPDATED', profile });
+    }
+  } catch (e) {
+    // Tab might not have content script - that's okay
+  }
+  
   showStatus('saved', `${profile.name || 'Profile'} saved ✓`);
   displaySavedMeasurements(profile);
   updateFitVisualizations();
@@ -541,4 +553,121 @@ function displaySavedMeasurements(profile) {
 
 function capitalize(s) {
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// --- Persistent Setup Bug Fix ---
+
+async function checkAndHideSetupPrompt() {
+  // Check if user has saved measurements
+  const hasProfile = await hasValidProfile();
+  
+  if (hasProfile) {
+    // User has measurements, notify content script to hide setup prompt
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab) {
+        chrome.tabs.sendMessage(tab.id, { type: 'PROFILE_UPDATED' });
+      }
+    } catch (e) {
+      // Tab might not have content script - that's okay
+    }
+  }
+}
+
+async function hasValidProfile() {
+  const data = await chrome.storage.local.get('sizeOracleProfiles');
+  const profiles = data?.sizeOracleProfiles;
+  
+  if (!profiles) return false;
+  
+  // Check if any profile has at least one body measurement
+  return Object.values(profiles).some(profile => 
+    BODY_FIELDS.some(field => profile[field] != null && profile[field] > 0)
+  );
+}
+
+// --- Dynamic Confidence Logic Update ---
+
+function calculateDynamicConfidence(userMeasurements, sizeData, selectedSize) {
+  if (!userMeasurements || !sizeData || !selectedSize) return 0;
+  
+  const sizeInfo = sizeData.sizes?.find(s => s.size === selectedSize || s.label === selectedSize);
+  if (!sizeInfo) return 0;
+  
+  let totalConfidence = 0;
+  let measuredFields = 0;
+  
+  // Check each measurement field
+  ['chest', 'waist', 'hips'].forEach(field => {
+    const userValue = userMeasurements[field];
+    const sizeRange = sizeInfo[field];
+    
+    if (!userValue || !sizeRange) return;
+    
+    measuredFields++;
+    
+    // Calculate fit confidence for this field
+    const rangeMin = sizeRange.min || sizeRange[0];
+    const rangeMax = sizeRange.max || sizeRange[1];
+    const rangeMedian = (rangeMin + rangeMax) / 2;
+    const rangeWidth = rangeMax - rangeMin;
+    
+    // Distance from median as percentage of range width
+    const distance = Math.abs(userValue - rangeMedian);
+    const relativeDistance = distance / (rangeWidth / 2);
+    
+    // Apply fit preference adjustments
+    let fieldConfidence = 100;
+    
+    if (relativeDistance <= 0.2) {
+      fieldConfidence = 100; // Perfect fit
+    } else if (relativeDistance <= 0.5) {
+      fieldConfidence = 90 - (relativeDistance - 0.2) * 100; // Good fit
+    } else if (relativeDistance <= 1.0) {
+      fieldConfidence = 70 - (relativeDistance - 0.5) * 80; // Acceptable fit
+    } else if (relativeDistance <= 1.5) {
+      fieldConfidence = 40 - (relativeDistance - 1.0) * 60; // Poor fit
+    } else {
+      fieldConfidence = Math.max(0, 20 - (relativeDistance - 1.5) * 40); // Very poor fit
+    }
+    
+    // Apply user fit preference
+    const fitPreference = currentFit || 'regular';
+    if (fitPreference === 'fitted') {
+      // Penalize sizes that are too big
+      if (userValue < rangeMin) fieldConfidence *= 0.7; 
+    } else if (fitPreference === 'relaxed') {
+      // Penalize sizes that are too small
+      if (userValue > rangeMax) fieldConfidence *= 0.7;
+    }
+    
+    totalConfidence += Math.max(0, fieldConfidence);
+  });
+  
+  return measuredFields > 0 ? totalConfidence / measuredFields : 0;
+}
+
+// --- Enhanced Size Change Handler ---
+
+function handleSizeSelection(newSize, sizeData) {
+  if (!allProfiles[currentProfile] || !sizeData) return;
+  
+  const userMeasurements = allProfiles[currentProfile];
+  const newConfidence = calculateDynamicConfidence(userMeasurements, sizeData, newSize);
+  
+  // Update confidence ring immediately
+  updateConfidenceRing(newConfidence);
+  
+  // Notify content script of size change
+  try {
+    chrome.runtime.sendMessage({
+      type: 'SIZE_CHANGED',
+      size: newSize,
+      confidence: newConfidence
+    });
+  } catch (e) {
+    // Extension context might be invalidated
+  }
+  
+  return newConfidence;
 }

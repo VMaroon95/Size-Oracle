@@ -49,6 +49,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       handleSizeChartDetection(message.sizeChart, sender);
       break;
 
+    case 'PROFILE_UPDATED':
+      // Forward profile update to content script
+      forwardToContentScript(sender.tab?.id, message);
+      break;
+
+    case 'SIZE_CHANGED':
+      // Forward size change to content script 
+      forwardToContentScript(sender.tab?.id, message);
+      break;
+
+    case 'UPDATE_BADGE':
+      updateBadge(message.confidence, sender.tab?.id);
+      break;
+
+    case 'CACHE_RESULT':
+      cacheResult(message.result);
+      break;
+
     // v2.0: Handle getSizeChart requests from popup
     case 'getSizeChart':
       requestSizeChartFromTab(sender.tab?.id, sendResponse);
@@ -204,4 +222,35 @@ function requestSizeChartFromTab(tabId, sendResponse) {
       sendResponse({ sizeChart: response?.sizeChart || null });
     }
   });
+}
+
+function forwardToContentScript(tabId, message) {
+  if (!tabId) return;
+  
+  chrome.tabs.sendMessage(tabId, message).catch(() => {
+    // Content script might not be loaded - that's okay
+  });
+}
+
+async function cacheResult(result) {
+  try {
+    const data = await chrome.storage.local.get('sizeOracleHistory');
+    const history = data.sizeOracleHistory || [];
+    
+    // Add to history
+    history.unshift({
+      ...result,
+      id: Date.now(),
+      timestamp: result.timestamp || Date.now()
+    });
+    
+    // Keep only last 100 entries
+    if (history.length > 100) {
+      history.splice(100);
+    }
+    
+    await chrome.storage.local.set({ sizeOracleHistory: history });
+  } catch (error) {
+    console.error('Failed to cache result:', error);
+  }
 }

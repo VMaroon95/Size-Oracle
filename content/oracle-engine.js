@@ -11,12 +11,12 @@ window.SizeOracle = window.SizeOracle || {};
 (() => {
   'use strict';
 
-  // Measurement weights
+  // Measurement weights - chest is most important for fit
   const WEIGHTS = {
+    chest: 0.40,
     waist: 0.35,
-    chest: 0.30,
-    hips: 0.25,
-    inseam: 0.10,
+    hips: 0.20,
+    inseam: 0.05,
   };
 
   // Fit preference adjustments (in inches added to user measurements)
@@ -82,17 +82,61 @@ window.SizeOracle = window.SizeOracle || {};
 
   function measurementScore(userValue, range) {
     if (!range || range.length < 2 || userValue == null) return null;
+    
     const [min, max] = range;
-
-    if (userValue >= min && userValue <= max) return 100;
-
-    const distance = userValue < min ? min - userValue : userValue - max;
-    if (distance <= 0.5) return 90;
-    if (distance <= 1) return 80;
-    if (distance <= 1.5) return 70;
-    if (distance <= 2) return 60;
-    if (distance <= 3) return 40;
-    return 20;
+    const rangeMedian = (min + max) / 2;
+    const rangeWidth = max - min;
+    
+    // Calculate distance from median as a percentage of range width
+    const distance = Math.abs(userValue - rangeMedian);
+    const relativeDistance = distance / (rangeWidth / 2); // Normalize to range half-width
+    
+    // Mathematical scoring based on statistical distribution
+    let score;
+    
+    if (relativeDistance <= 0.1) {
+      // Perfect fit - very close to median
+      score = 100;
+    } else if (relativeDistance <= 0.3) {
+      // Excellent fit - within 30% of median distance
+      score = 95 - (relativeDistance - 0.1) * 25;  // 95-90
+    } else if (relativeDistance <= 0.5) {
+      // Good fit - within the range but not centered
+      score = 90 - (relativeDistance - 0.3) * 35;  // 90-83
+    } else if (relativeDistance <= 1.0) {
+      // Within range boundaries
+      score = 83 - (relativeDistance - 0.5) * 23;  // 83-71.5
+    } else if (relativeDistance <= 1.5) {
+      // Close to range but outside boundaries
+      score = 71.5 - (relativeDistance - 1.0) * 35; // 71.5-54
+    } else if (relativeDistance <= 2.0) {
+      // Moderately outside range
+      score = 54 - (relativeDistance - 1.5) * 30;   // 54-39
+    } else if (relativeDistance <= 3.0) {
+      // Far outside range
+      score = 39 - (relativeDistance - 2.0) * 25;   // 39-14
+    } else {
+      // Very poor fit
+      score = Math.max(0, 14 - (relativeDistance - 3.0) * 14); // 14-0
+    }
+    
+    // Additional penalty if significantly larger than range (loose fit penalty)
+    if (userValue > max) {
+      const overage = (userValue - max) / rangeWidth;
+      if (overage > 0.5) {
+        score *= (1 - Math.min(0.3, overage * 0.2)); // Up to 30% penalty for very loose fits
+      }
+    }
+    
+    // Additional penalty if significantly smaller than range (tight fit penalty)
+    if (userValue < min) {
+      const shortage = (min - userValue) / rangeWidth;
+      if (shortage > 0.5) {
+        score *= (1 - Math.min(0.4, shortage * 0.3)); // Up to 40% penalty for very tight fits
+      }
+    }
+    
+    return Math.max(0, Math.round(score));
   }
 
   function fitLabel(score) {
