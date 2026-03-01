@@ -1,218 +1,243 @@
 /**
- * Size Oracle — Popup Controller v3.0
- * Minimalist UI with Chrome Dark Mode styling and fixed difference-from-median scoring
+ * Size Oracle — Popup Controller v3.1
+ * 
+ * Popup ALWAYS shows measurement setup dashboard (no result view).
+ * Supports multiple named profiles, inseam, and shoe size.
  */
 
 const CM_PER_INCH = 2.54;
-const BODY_FIELDS = ['chest', 'waist', 'hips'];
+const BODY_FIELDS = ['chest', 'waist', 'hips', 'inseam'];
+const DEFAULT_PROFILE_NAME = 'Me';
 
 let currentUnit = 'in';
 let currentGender = 'mens';
-let currentProfile = {};
-let currentSizeChart = null;
+let currentFit = 'regular';
+let currentProfileName = DEFAULT_PROFILE_NAME;
+let allProfiles = {};  // { "Me": { chest, waist, ... }, "Partner": { ... } }
 
-// DOM References
+// DOM
 const $ = id => document.getElementById(id);
-const inputs = Object.fromEntries(BODY_FIELDS.map(f => [f, $(f)]));
-
-// Views
-const resultView = $('result-view');
-const setupView = $('setup-view');
-const hiddenMenu = $('hidden-menu');
-const savedView = $('saved-view');
-const historyView = $('history-view');
+const inputs = {};
+BODY_FIELDS.forEach(f => { inputs[f] = $(f); });
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
   setupEventListeners();
-  await loadProfile();
-  await checkAndShowAppropriateView();
-  requestSizeChartFromPage();
+  await loadAllProfiles();
+  populateProfileDropdown();
+  loadCurrentProfile();
 });
 
 function setupEventListeners() {
-  // Three-dot menu
-  $('three-dot-menu').addEventListener('click', toggleHiddenMenu);
-  
-  // Menu items
-  $('menu-saved').addEventListener('click', showSavedMeasurements);
-  $('menu-history').addEventListener('click', showHistory);
-  $('menu-units').addEventListener('click', toggleUnits);
-  $('menu-category').addEventListener('click', toggleCategory);
-  $('menu-close').addEventListener('click', showSetupView);
-  
-  // Back buttons
-  $('back-from-saved').addEventListener('click', showResultView);
-  $('back-from-history').addEventListener('click', showResultView);
-  
-  // Setup form
+  // Save / Clear
   $('save-btn').addEventListener('click', saveProfile);
   $('clear-btn').addEventListener('click', clearProfile);
+
+  // Unit toggles
   $('btn-inches').addEventListener('click', () => setUnit('in'));
   $('btn-cm').addEventListener('click', () => setUnit('cm'));
+
+  // Gender toggles
   $('btn-mens').addEventListener('click', () => setGender('mens'));
   $('btn-womens').addEventListener('click', () => setGender('womens'));
-  
+
+  // Fit toggles
+  document.querySelectorAll('.fit-btn').forEach(btn => {
+    btn.addEventListener('click', () => setFit(btn.dataset.fit));
+  });
+
+  // Profile selector
+  $('profile-select').addEventListener('change', () => {
+    currentProfileName = $('profile-select').value;
+    loadCurrentProfile();
+  });
+
+  // Add profile
+  $('add-profile-btn').addEventListener('click', () => {
+    $('new-profile-row').style.display = 'flex';
+    $('new-profile-name').focus();
+  });
+  $('cancel-new-profile').addEventListener('click', () => {
+    $('new-profile-row').style.display = 'none';
+    $('new-profile-name').value = '';
+  });
+  $('confirm-new-profile').addEventListener('click', createNewProfile);
+  $('new-profile-name').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') createNewProfile();
+  });
+
+  // Delete profile
+  $('delete-profile-btn').addEventListener('click', deleteCurrentProfile);
+
   // Auto-save on input change
   BODY_FIELDS.forEach(field => {
-    inputs[field].addEventListener('change', () => {
-      if (hasValidMeasurements()) {
-        autoSaveProfile();
-      }
-    });
+    inputs[field].addEventListener('change', () => autoSaveProfile());
   });
+  $('shoe-size').addEventListener('change', () => autoSaveProfile());
+  $('shoe-system').addEventListener('change', () => autoSaveProfile());
+}
+
+// --- Profile Management ---
+
+async function loadAllProfiles() {
+  const data = await chrome.storage.local.get(['sizeOracleProfiles', 'sizeOracleProfile', 'sizeOracleActiveProfile']);
   
-  // Hide menu when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!$('three-dot-menu').contains(e.target) && !hiddenMenu.contains(e.target)) {
-      hideHiddenMenu();
-    }
-  });
-}
-
-// View Management
-function showResultView() {
-  hideAllViews();
-  resultView.style.display = 'flex';
-  updateSizeDisplay();
-}
-
-function showSetupView() {
-  hideAllViews();
-  setupView.style.display = 'block';
-}
-
-function showSavedMeasurements() {
-  hideHiddenMenu();
-  hideAllViews();
-  savedView.style.display = 'block';
-  displaySavedMeasurements();
-}
-
-function showHistory() {
-  hideHiddenMenu();
-  hideAllViews();
-  historyView.style.display = 'block';
-  loadHistory();
-}
-
-function hideAllViews() {
-  resultView.style.display = 'none';
-  setupView.style.display = 'none';
-  savedView.style.display = 'none';
-  historyView.style.display = 'none';
-  hideHiddenMenu();
-}
-
-function toggleHiddenMenu() {
-  if (hiddenMenu.style.display === 'none') {
-    hiddenMenu.style.display = 'block';
+  if (data.sizeOracleProfiles && Object.keys(data.sizeOracleProfiles).length > 0) {
+    allProfiles = data.sizeOracleProfiles;
+  } else if (data.sizeOracleProfile && Object.keys(data.sizeOracleProfile).length > 0) {
+    // Migrate from old single-profile storage
+    allProfiles = { [DEFAULT_PROFILE_NAME]: data.sizeOracleProfile };
+    await chrome.storage.local.set({ sizeOracleProfiles: allProfiles });
   } else {
-    hideHiddenMenu();
+    allProfiles = { [DEFAULT_PROFILE_NAME]: {} };
   }
+
+  currentProfileName = data.sizeOracleActiveProfile || Object.keys(allProfiles)[0] || DEFAULT_PROFILE_NAME;
 }
 
-function hideHiddenMenu() {
-  hiddenMenu.style.display = 'none';
+function populateProfileDropdown() {
+  const select = $('profile-select');
+  select.innerHTML = '';
+  for (const name of Object.keys(allProfiles)) {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    if (name === currentProfileName) opt.selected = true;
+    select.appendChild(opt);
+  }
+  // Hide delete button if only one profile
+  $('delete-profile-btn').style.display = Object.keys(allProfiles).length <= 1 ? 'none' : 'inline-flex';
 }
 
-// Profile Management
-async function loadProfile() {
-  const data = await chrome.storage.local.get('sizeOracleProfile');
-  currentProfile = data?.sizeOracleProfile || {};
+function loadCurrentProfile() {
+  const profile = allProfiles[currentProfileName] || {};
   
-  if (currentProfile.unit) currentUnit = currentProfile.unit;
-  if (currentProfile.gender) currentGender = currentProfile.gender;
-  
-  // Populate inputs
+  if (profile.unit) currentUnit = profile.unit;
+  if (profile.gender) currentGender = profile.gender;
+  if (profile.fitPreference) currentFit = profile.fitPreference;
+
+  // Populate body fields
   BODY_FIELDS.forEach(field => {
-    if (currentProfile[field] != null) {
+    if (profile[field] != null) {
       inputs[field].value = currentUnit === 'cm'
-        ? (currentProfile[field] * CM_PER_INCH).toFixed(1)
-        : currentProfile[field];
+        ? (profile[field] * CM_PER_INCH).toFixed(1)
+        : profile[field];
+    } else {
+      inputs[field].value = '';
     }
   });
-  
+
+  // Shoe size
+  if (profile.shoeSize != null) {
+    $('shoe-size').value = profile.shoeSize;
+  } else {
+    $('shoe-size').value = '';
+  }
+  $('shoe-system').value = profile.shoeSystem || 'us';
+
   updateUnitUI();
   updateGenderUI();
+  updateFitUI();
   updateStatus();
 }
 
-async function saveProfile() {
-  if (!hasValidMeasurements()) {
-    updateStatus('Enter at least chest, waist, and hips measurements');
+async function createNewProfile() {
+  const name = $('new-profile-name').value.trim();
+  if (!name) return;
+  if (allProfiles[name]) {
+    updateStatus(`Profile "${name}" already exists`);
     return;
   }
+
+  allProfiles[name] = { gender: currentGender, unit: currentUnit, fitPreference: currentFit };
+  currentProfileName = name;
+  await chrome.storage.local.set({ sizeOracleProfiles: allProfiles, sizeOracleActiveProfile: currentProfileName });
+
+  $('new-profile-row').style.display = 'none';
+  $('new-profile-name').value = '';
+  populateProfileDropdown();
+  loadCurrentProfile();
+  updateStatus(`Profile "${name}" created`);
+}
+
+async function deleteCurrentProfile() {
+  if (Object.keys(allProfiles).length <= 1) return;
   
+  const nameToDelete = currentProfileName;
+  delete allProfiles[nameToDelete];
+  currentProfileName = Object.keys(allProfiles)[0];
+  await chrome.storage.local.set({ sizeOracleProfiles: allProfiles, sizeOracleActiveProfile: currentProfileName });
+
+  populateProfileDropdown();
+  loadCurrentProfile();
+  updateStatus(`Profile "${nameToDelete}" deleted`);
+}
+
+async function saveProfile() {
   await autoSaveProfile();
-  updateStatus('Profile saved');
-  await checkAndShowAppropriateView();
+  updateStatus('Profile saved ✓');
+  
+  // Notify content scripts
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab) chrome.tabs.sendMessage(tab.id, { type: 'PROFILE_UPDATED' });
+  } catch (e) {}
 }
 
 async function autoSaveProfile() {
-  currentProfile.unit = currentUnit;
-  currentProfile.gender = currentGender;
-  currentProfile.savedAt = new Date().toISOString();
-  
-  // Store measurements in inches
+  const profile = allProfiles[currentProfileName] || {};
+  profile.unit = currentUnit;
+  profile.gender = currentGender;
+  profile.fitPreference = currentFit;
+  profile.savedAt = new Date().toISOString();
+
+  // Store body measurements in inches
   BODY_FIELDS.forEach(field => {
     const raw = parseFloat(inputs[field].value);
     if (!isNaN(raw) && raw > 0) {
-      currentProfile[field] = currentUnit === 'cm' 
+      profile[field] = currentUnit === 'cm'
         ? parseFloat((raw / CM_PER_INCH).toFixed(2))
         : raw;
     } else {
-      delete currentProfile[field];
+      delete profile[field];
     }
   });
-  
-  await chrome.storage.local.set({ sizeOracleProfile: currentProfile });
-  
-  // Notify content scripts about profile update
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab) {
-      chrome.tabs.sendMessage(tab.id, { type: 'PROFILE_UPDATED' });
-    }
-  } catch (e) {
-    // Tab might not have content script
+
+  // Shoe size
+  const shoeVal = parseFloat($('shoe-size').value);
+  if (!isNaN(shoeVal) && shoeVal > 0) {
+    profile.shoeSize = shoeVal;
+    profile.shoeSystem = $('shoe-system').value;
+  } else {
+    delete profile.shoeSize;
+    delete profile.shoeSystem;
   }
+
+  allProfiles[currentProfileName] = profile;
+
+  // Also save as the "active" single profile for content script compatibility
+  await chrome.storage.local.set({
+    sizeOracleProfiles: allProfiles,
+    sizeOracleActiveProfile: currentProfileName,
+    sizeOracleProfile: profile,  // backward compat for content scripts
+  });
 }
 
 function clearProfile() {
-  BODY_FIELDS.forEach(field => {
-    inputs[field].value = '';
-    delete currentProfile[field];
-  });
-  updateStatus('Profile cleared');
+  BODY_FIELDS.forEach(field => { inputs[field].value = ''; });
+  $('shoe-size').value = '';
+  updateStatus('Fields cleared');
 }
 
-function hasValidMeasurements() {
-  return BODY_FIELDS.every(field => {
-    const val = parseFloat(inputs[field].value);
-    return !isNaN(val) && val > 0;
-  });
-}
+// --- Unit / Gender / Fit ---
 
-async function hasStoredProfile() {
-  const data = await chrome.storage.local.get('sizeOracleProfile');
-  const profile = data?.sizeOracleProfile;
-  return profile && BODY_FIELDS.some(field => profile[field] != null && profile[field] > 0);
-}
-
-// Unit and Gender Management
 function setUnit(unit) {
   if (unit === currentUnit) return;
-  
-  // Convert current values
-  const conversionFactor = unit === 'cm' ? CM_PER_INCH : 1 / CM_PER_INCH;
+  const factor = unit === 'cm' ? CM_PER_INCH : 1 / CM_PER_INCH;
   BODY_FIELDS.forEach(field => {
-    const currentVal = parseFloat(inputs[field].value);
-    if (!isNaN(currentVal)) {
-      inputs[field].value = (currentVal * conversionFactor).toFixed(1);
-    }
+    const val = parseFloat(inputs[field].value);
+    if (!isNaN(val)) inputs[field].value = (val * factor).toFixed(1);
   });
-  
   currentUnit = unit;
   updateUnitUI();
 }
@@ -222,14 +247,9 @@ function setGender(gender) {
   updateGenderUI();
 }
 
-function toggleUnits() {
-  hideHiddenMenu();
-  setUnit(currentUnit === 'in' ? 'cm' : 'in');
-}
-
-function toggleCategory() {
-  hideHiddenMenu();
-  setGender(currentGender === 'mens' ? 'womens' : 'mens');
+function setFit(fit) {
+  currentFit = fit;
+  updateFitUI();
 }
 
 function updateUnitUI() {
@@ -244,208 +264,19 @@ function updateGenderUI() {
   $('btn-womens').classList.toggle('toggle-btn--active', currentGender === 'womens');
 }
 
+function updateFitUI() {
+  document.querySelectorAll('.fit-btn').forEach(btn => {
+    btn.classList.toggle('toggle-btn--active', btn.dataset.fit === currentFit);
+  });
+}
+
 function updateStatus(message = null) {
   const status = $('status');
   if (message) {
     status.textContent = message;
-  } else if (hasValidMeasurements()) {
-    status.textContent = 'Profile ready';
   } else {
-    status.textContent = 'No profile yet';
+    const profile = allProfiles[currentProfileName] || {};
+    const hasMeasurements = BODY_FIELDS.some(f => profile[f] != null && profile[f] > 0);
+    status.textContent = hasMeasurements ? 'Profile ready ✓' : 'No measurements yet';
   }
 }
-
-// Size Display and Scoring
-function updateSizeDisplay() {
-  // This will be called when we have size chart data from content script
-  try {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]) {
-        chrome.tabs.sendMessage(tabs[0].id, { type: 'GET_SIZE_RESULT' }, (response) => {
-          if (response && response.size && response.confidence) {
-            $('size-letter').textContent = response.size;
-            $('confidence-percentage').textContent = response.confidence + '%';
-          } else {
-            // Fallback - calculate if we have size chart
-            if (currentSizeChart) {
-              const result = calculateBestSize(currentProfile, currentSizeChart);
-              $('size-letter').textContent = result.size;
-              $('confidence-percentage').textContent = Math.round(result.confidence) + '%';
-            } else {
-              $('size-letter').textContent = 'M';
-              $('confidence-percentage').textContent = '96%';
-            }
-          }
-        });
-      }
-    });
-  } catch (e) {
-    $('size-letter').textContent = 'M';
-    $('confidence-percentage').textContent = '96%';
-  }
-}
-
-// CRITICAL: Fixed Difference-from-Median Scoring Algorithm
-function calculateBestSize(profile, sizeData) {
-  if (!profile || !sizeData || !sizeData.sizes) {
-    return { size: 'M', confidence: 96 };
-  }
-  
-  let bestSize = null;
-  let bestScore = -1;
-  
-  // Test each size and find the one with highest score
-  sizeData.sizes.forEach(sizeInfo => {
-    const score = calculateSizeScore(profile, sizeInfo);
-    console.log(`Size Score Debug: ${sizeInfo.size} = ${score}%`);
-    
-    if (score > bestScore) {
-      bestScore = score;
-      bestSize = sizeInfo;
-    }
-  });
-  
-  return {
-    size: bestSize?.size || 'M',
-    confidence: bestScore > 0 ? bestScore : 96
-  };
-}
-
-function calculateSizeScore(userMeasurements, sizeInfo) {
-  if (!userMeasurements || !sizeInfo) return 0;
-  
-  let totalScore = 0;
-  let measuredFields = 0;
-  
-  // Check each measurement field
-  ['chest', 'waist', 'hips'].forEach(field => {
-    const userValue = userMeasurements[field];
-    const sizeRange = sizeInfo[field];
-    
-    if (!userValue || !sizeRange || !Array.isArray(sizeRange) || sizeRange.length < 2) {
-      return; // Skip this field
-    }
-    
-    measuredFields++;
-    
-    // Calculate median of the size range
-    const [min, max] = sizeRange;
-    const sizeMedian = (min + max) / 2;
-    
-    // Calculate distance from median
-    const distance = Math.abs(userValue - sizeMedian);
-    
-    // Apply penalty - calibrated so:
-    // userValue = median → score ≈ 98-100%
-    // userValue = median ± 2" → score ≈ 40-50%
-    const penalty = 14.5;
-    const fieldScore = Math.max(0, Math.min(100, 100 - (distance * penalty)));
-    
-    console.log(`Field ${field}: user=${userValue}, range=[${min}-${max}], median=${sizeMedian}, distance=${distance.toFixed(1)}, score=${Math.round(fieldScore)}`);
-    
-    totalScore += fieldScore;
-  });
-  
-  return measuredFields > 0 ? Math.round(totalScore / measuredFields) : 0;
-}
-
-// Request size chart from content script
-function requestSizeChartFromPage() {
-  try {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]) {
-        chrome.tabs.sendMessage(tabs[0].id, { type: 'REQUEST_SIZE_CHART' }, (response) => {
-          if (response && response.sizeChart) {
-            currentSizeChart = response.sizeChart;
-            console.log('Received size chart:', currentSizeChart);
-          }
-        });
-      }
-    });
-  } catch (e) {
-    console.log('Could not request size chart from page');
-  }
-}
-
-// View Logic
-async function checkAndShowAppropriateView() {
-  const hasProfile = await hasStoredProfile();
-  if (hasProfile) {
-    showResultView();
-  } else {
-    showSetupView();
-  }
-}
-
-// Saved Measurements Display
-function displaySavedMeasurements() {
-  const savedData = $('saved-data');
-  if (!currentProfile || !hasValidMeasurements()) {
-    savedData.innerHTML = '<p style="color: #9aa0a6; text-align: center;">No measurements saved</p>';
-    return;
-  }
-  
-  const unit = currentProfile.unit || 'in';
-  const rows = BODY_FIELDS
-    .filter(field => currentProfile[field] != null)
-    .map(field => {
-      const val = unit === 'cm' 
-        ? (currentProfile[field] * CM_PER_INCH).toFixed(1) + ' cm'
-        : currentProfile[field] + ' in';
-      
-      return `
-        <div class="measurement-row">
-          <span>${capitalize(field)}</span>
-          <span>${val}</span>
-        </div>
-      `;
-    })
-    .join('');
-  
-  savedData.innerHTML = rows;
-}
-
-// History Display
-async function loadHistory() {
-  const data = await chrome.storage.local.get('sizeOracleHistory');
-  const history = data?.sizeOracleHistory || [];
-  const list = $('history-list');
-  
-  if (history.length === 0) {
-    list.innerHTML = '<p class="history-empty">No recommendations yet. Visit a store!</p>';
-    return;
-  }
-  
-  list.innerHTML = history.slice(0, 20).map(entry => {
-    const date = new Date(entry.timestamp).toLocaleDateString();
-    const site = entry.site.replace(/^www\./, '');
-    return `
-      <div class="history-item">
-        <div class="history-main">
-          <span class="history-size">${entry.size}</span>
-          <span class="history-conf">${entry.confidence}%</span>
-        </div>
-        <div class="history-meta">
-          <span class="history-site">${site}</span>
-          <span class="history-date">${date}</span>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-// Utility
-function capitalize(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-// Listen for messages from content script
-chrome.runtime?.onMessage?.addListener((request, sender, sendResponse) => {
-  if (request.type === 'SIZE_CHART_FOUND') {
-    currentSizeChart = request.sizeChart;
-    updateSizeDisplay();
-  } else if (request.type === 'SIZE_RESULT_UPDATE') {
-    $('size-letter').textContent = request.size;
-    $('confidence-percentage').textContent = Math.round(request.confidence) + '%';
-  }
-});

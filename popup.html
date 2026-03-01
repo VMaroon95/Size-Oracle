@@ -8,17 +8,8 @@
 </head>
 <body>
   <div class="container">
-    <!-- Primary View: Size and Confidence -->
-    <div id="result-view" class="result-view" style="display: none;">
-      <div class="three-dot-menu" id="three-dot-menu">⋮</div>
-      <div class="size-display">
-        <div class="size-letter" id="size-letter">M</div>
-        <div class="confidence-bar">|</div>
-        <div class="confidence-percentage" id="confidence-percentage">96%</div>
-      </div>
-    </div>
 
-    <!-- Setup View -->
+    <!-- Setup / Measurements View (always shown when popup opens) -->
     <div id="setup-view" class="setup-view">
       <header>
         <h1 id="header-title">Size Oracle</h1>
@@ -27,6 +18,23 @@
       </header>
 
       <div id="status" class="status">No profile yet</div>
+
+      <!-- Profile Selector -->
+      <div class="profile-selector">
+        <label class="profile-label">Profile</label>
+        <div class="profile-row">
+          <select id="profile-select" class="profile-dropdown"></select>
+          <button id="add-profile-btn" class="btn-icon" title="Add Profile">+</button>
+          <button id="delete-profile-btn" class="btn-icon btn-icon--danger" title="Delete Profile">✕</button>
+        </div>
+      </div>
+
+      <!-- New Profile Name (hidden by default) -->
+      <div id="new-profile-row" class="new-profile-row" style="display:none;">
+        <input type="text" id="new-profile-name" placeholder="Profile name (e.g. Partner, Kid)" maxlength="20">
+        <button id="confirm-new-profile" class="btn btn--small">Create</button>
+        <button id="cancel-new-profile" class="btn btn--small btn--secondary">Cancel</button>
+      </div>
 
       <!-- Unit Toggle -->
       <div class="toggle-row">
@@ -40,7 +48,15 @@
         <button id="btn-womens" class="toggle-btn" data-gender="womens">Women's</button>
       </div>
 
-      <!-- Measurements -->
+      <!-- Fit Preference -->
+      <div class="toggle-row">
+        <button class="toggle-btn fit-btn" data-fit="fitted">Fitted</button>
+        <button class="toggle-btn fit-btn toggle-btn--active" data-fit="regular">Regular</button>
+        <button class="toggle-btn fit-btn" data-fit="relaxed">Relaxed</button>
+      </div>
+
+      <!-- Body Measurements -->
+      <div class="section-label">Body Measurements</div>
       <div class="inputs">
         <div class="input-group">
           <label for="chest">Chest <span class="unit-label">(in)</span></label>
@@ -53,6 +69,27 @@
         <div class="input-group">
           <label for="hips">Hips <span class="unit-label">(in)</span></label>
           <input type="number" id="hips" step="0.5" min="0" placeholder="e.g. 40">
+        </div>
+        <div class="input-group">
+          <label for="inseam">Inseam <span class="unit-label">(in)</span></label>
+          <input type="number" id="inseam" step="0.5" min="0" placeholder="e.g. 32">
+        </div>
+      </div>
+
+      <!-- Shoe Size -->
+      <div class="section-label">Shoe Size</div>
+      <div class="inputs shoe-inputs">
+        <div class="input-group">
+          <label for="shoe-size">Size</label>
+          <input type="number" id="shoe-size" step="0.5" min="1" max="20" placeholder="e.g. 10">
+        </div>
+        <div class="input-group">
+          <label for="shoe-system">System</label>
+          <select id="shoe-system" class="select-input">
+            <option value="us">US</option>
+            <option value="uk">UK</option>
+            <option value="eu">EU</option>
+          </select>
         </div>
       </div>
 
@@ -67,34 +104,6 @@
       </footer>
     </div>
 
-    <!-- Hidden Menu -->
-    <div id="hidden-menu" class="hidden-menu" style="display: none;">
-      <div class="menu-item" id="menu-saved">Saved Measurements</div>
-      <div class="menu-item" id="menu-history">Profile/History</div>
-      <div class="menu-item" id="menu-units">Unit Toggle (Inches/CM)</div>
-      <div class="menu-item" id="menu-category">Category Toggle (Men's/Women's)</div>
-      <div class="menu-item" id="menu-close">Back to Setup</div>
-    </div>
-
-    <!-- Saved Measurements View -->
-    <div id="saved-view" class="saved-view" style="display: none;">
-      <div class="view-header">
-        <button class="back-btn" id="back-from-saved">←</button>
-        <h2>Saved Measurements</h2>
-      </div>
-      <div id="saved-data" class="saved-data"></div>
-    </div>
-
-    <!-- History View -->
-    <div id="history-view" class="history-view" style="display: none;">
-      <div class="view-header">
-        <button class="back-btn" id="back-from-history">←</button>
-        <h2>Profile/History</h2>
-      </div>
-      <div id="history-list" class="history-list">
-        <p class="history-empty">No recommendations yet. Visit a store!</p>
-      </div>
-    </div>
   </div>
 
   <script src="popup.js"></script>

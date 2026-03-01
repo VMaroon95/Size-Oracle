@@ -1,6 +1,10 @@
 /**
- * Size-Oracle — Overlay UI
- * Native Chrome UI with floating action button and price-point badge
+ * Size-Oracle — Overlay UI v3.1
+ * 
+ * BEHAVIOR:
+ * - Price badge: shows confidence for the CURRENTLY SELECTED size on the page
+ * - FAB (bottom-right): ALWAYS shows the BEST matching size + highest confidence (never changes)
+ * - FAB click: opens popup (measurement setup dashboard)
  */
 
 window.SizeOracle = window.SizeOracle || {};
@@ -11,12 +15,15 @@ window.SizeOracle = window.SizeOracle || {};
   let fabEl = null;
   let priceBadgeEl = null;
   let setupBadgeEl = null;
-  let currentResult = null;
+  let bestResult = null;       // The overall best match (never changes)
+  let allResults = null;       // All size scores for lookup
   let isSetupComplete = false;
+  let currentProfile = null;
+  let lastSelectedSize = null;
+  let sizeObserver = null;
 
   // --- Initialization ---
 
-  // Simple built-in scoring so overlay never shows "undefined"
   function calculateScore(userValue, range) {
     if (!userValue || !range || range.length < 2) return 0;
     const median = (range[0] + range[1]) / 2;
@@ -24,30 +31,28 @@ window.SizeOracle = window.SizeOracle || {};
     return Math.max(0, Math.min(100, Math.round(100 - distance * 14.5)));
   }
 
-  function findBestFromChart(profile, chart) {
-    let bestSize = null;
-    let bestScore = -1;
+  function scoreAllSizes(profile, chart) {
+    const results = [];
     for (const entry of chart) {
       let total = 0, count = 0;
-      for (const field of ['chest', 'waist', 'hips']) {
+      for (const field of ['chest', 'waist', 'hips', 'inseam']) {
         if (profile[field] && entry[field]) {
           total += calculateScore(profile[field], entry[field]);
           count++;
         }
       }
       const score = count > 0 ? Math.round(total / count) : 0;
-      if (score > bestScore) {
-        bestScore = score;
-        bestSize = entry.size;
-      }
+      results.push({ size: entry.size, confidence: score });
     }
-    return bestSize ? { recommended: bestSize, confidence: bestScore } : null;
+    results.sort((a, b) => b.confidence - a.confidence);
+    return results;
   }
 
   async function init() {
     await sleep(1500);
 
     const profile = await getProfile();
+    currentProfile = profile;
     isSetupComplete = profile && Object.keys(profile).length > 0;
     
     if (!isSetupComplete) {
@@ -56,11 +61,15 @@ window.SizeOracle = window.SizeOracle || {};
     }
 
     let result = null;
+    let allSizeResults = null;
 
     // Try using the oracle engine first
     try {
       const sizeData = await window.SizeOracle.detectSizeChart?.();
       result = window.SizeOracle.findBestSize?.(profile, sizeData);
+      if (result && result.allResults) {
+        allSizeResults = result.allResults;
+      }
     } catch (e) {
       console.log('[Size Oracle] Engine error, using fallback:', e);
     }
@@ -70,16 +79,199 @@ window.SizeOracle = window.SizeOracle || {};
       const gender = profile.gender || 'mens';
       const chart = window.SizeOracle.universalSizes?.getChart?.(gender, 'tops');
       if (chart?.length) {
-        result = findBestFromChart(profile, chart);
+        allSizeResults = scoreAllSizes(profile, chart);
+        if (allSizeResults.length > 0) {
+          result = { recommended: allSizeResults[0].size, confidence: allSizeResults[0].confidence };
+        }
       }
     }
 
     if (!result || !result.recommended) return;
 
-    currentResult = result;
-    renderFAB(result);
-    renderPriceBadge(result);
-    updateBackgroundBadge(result.confidence, result.recommended);
+    bestResult = result;
+    allResults = allSizeResults || [{ size: result.recommended, confidence: result.confidence }];
+
+    // FAB always shows best result
+    renderFAB(bestResult);
+
+    // Price badge shows score for currently selected size on page
+    const selectedSize = detectSelectedSize();
+    renderPriceBadgeForSize(selectedSize);
+
+    updateBackgroundBadge(bestResult.confidence, bestResult.recommended);
+
+    // Watch for size selection changes on the page
+    watchSizeSelectors();
+  }
+
+  // --- Detect which size the user has selected on the page ---
+
+  function detectSelectedSize() {
+    // Amazon
+    const amazonSelected = document.querySelector('#native_dropdown_selected_size_name .a-dropdown-prompt');
+    if (amazonSelected) {
+      const text = amazonSelected.textContent.trim();
+      const match = text.match(/^(XXS|XS|S|M|L|XL|XXL|2XL|3XL|XXXL|X-Small|Small|Medium|Large|X-Large|XX-Large|3X-Large)/i);
+      if (match) return normalizeSizeLabel(match[1]);
+    }
+
+    // Amazon size button grid
+    const amazonSizeBtn = document.querySelector('#variation_size_name .selection');
+    if (amazonSizeBtn) {
+      return normalizeSizeLabel(amazonSizeBtn.textContent.trim());
+    }
+
+    // Amazon swatches
+    const amazonSwatch = document.querySelector('.swatchSelect.selected .a-size-base, #variation_size_name .a-button-selected .a-button-text');
+    if (amazonSwatch) {
+      return normalizeSizeLabel(amazonSwatch.textContent.trim());
+    }
+
+    // Generic: selected/active size buttons
+    const genericSelectors = [
+      '.size-selector .selected',
+      '.size-selector .active',
+      '.size-options .selected',
+      'button[class*="size"][aria-checked="true"]',
+      'button[class*="size"].selected',
+      'button[class*="size"].active',
+      '[data-testid="size-selector"] .selected',
+      '.size-btn.selected',
+      '.size-button.active',
+      '.size-chip--selected',
+    ];
+
+    for (const sel of genericSelectors) {
+      const el = document.querySelector(sel);
+      if (el) {
+        return normalizeSizeLabel(el.textContent.trim());
+      }
+    }
+
+    return null;
+  }
+
+  function normalizeSizeLabel(raw) {
+    if (!raw) return null;
+    const cleaned = raw.replace(/\s+/g, ' ').trim().toUpperCase();
+    const map = {
+      'X-SMALL': 'XS', 'XSMALL': 'XS', 'EXTRA SMALL': 'XS',
+      'SMALL': 'S',
+      'MEDIUM': 'M',
+      'LARGE': 'L',
+      'X-LARGE': 'XL', 'XLARGE': 'XL', 'EXTRA LARGE': 'XL',
+      'XX-LARGE': 'XXL', 'XXLARGE': 'XXL', '2XL': 'XXL', '2X-LARGE': 'XXL',
+      '3X-LARGE': '3XL', 'XXXLARGE': '3XL', '3XL': '3XL', 'XXXL': '3XL',
+    };
+    return map[cleaned] || cleaned.replace(/[^A-Z0-9]/g, '');
+  }
+
+  // --- Watch for size changes on the page ---
+
+  function watchSizeSelectors() {
+    // Observe DOM mutations for size selection changes
+    if (sizeObserver) sizeObserver.disconnect();
+
+    sizeObserver = new MutationObserver(() => {
+      const newSize = detectSelectedSize();
+      if (newSize && newSize !== lastSelectedSize) {
+        lastSelectedSize = newSize;
+        renderPriceBadgeForSize(newSize);
+      }
+    });
+
+    // Watch the entire product area for attribute/class changes
+    const productArea = document.querySelector('#centerCol, #ppd, .product-detail, .pdp-main, main, [role="main"]') || document.body;
+    sizeObserver.observe(productArea, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'aria-checked', 'aria-selected'],
+    });
+
+    // Also listen for click events on size-related buttons
+    document.addEventListener('click', (e) => {
+      setTimeout(() => {
+        const newSize = detectSelectedSize();
+        if (newSize && newSize !== lastSelectedSize) {
+          lastSelectedSize = newSize;
+          renderPriceBadgeForSize(newSize);
+        }
+      }, 300);
+    }, true);
+  }
+
+  // --- Render price badge for a specific selected size ---
+
+  function renderPriceBadgeForSize(selectedSize) {
+    // Remove old badge
+    if (priceBadgeEl && priceBadgeEl.parentNode) {
+      priceBadgeEl.parentNode.removeChild(priceBadgeEl);
+      priceBadgeEl = null;
+    }
+
+    if (!allResults || !selectedSize) {
+      // No selected size detected — show best result
+      if (bestResult) renderPriceBadge(bestResult.recommended, bestResult.confidence);
+      return;
+    }
+
+    // Find the score for the selected size
+    const match = allResults.find(r => r.size.toUpperCase() === selectedSize.toUpperCase());
+    if (match) {
+      renderPriceBadge(match.size, match.confidence);
+    } else {
+      // Size not in our chart — still show it with "?"
+      renderPriceBadge(selectedSize, null);
+    }
+  }
+
+  function renderPriceBadge(size, confidence) {
+    const priceSelectors = [
+      // Amazon-specific
+      '.a-price .a-offscreen',
+      '#priceblock_ourprice',
+      '#priceblock_dealprice',
+      '.priceToPay .a-offscreen',
+      'span.a-price:not(.a-text-price) .a-offscreen',
+      // Generic
+      '[data-testid="price"]',
+      '.price',
+      '.current-price',
+      '.sale-price',
+      '.product-price',
+      '[class*="price"]',
+      '[id*="price"]',
+    ];
+
+    let priceElement = null;
+    for (const selector of priceSelectors) {
+      const candidates = document.querySelectorAll(selector);
+      for (const el of candidates) {
+        if (el.textContent.match(/[\$£€¥₹]/) && el.offsetParent !== null) {
+          priceElement = el.closest('.a-price') || el;
+          break;
+        }
+      }
+      if (priceElement) break;
+    }
+
+    if (!priceElement) return;
+
+    priceBadgeEl = document.createElement('div');
+    priceBadgeEl.className = 'so-price-badge';
+
+    if (confidence !== null) {
+      priceBadgeEl.textContent = `Size Oracle: ${size} (${Math.round(confidence)}%)`;
+      priceBadgeEl.title = `Size Oracle confidence for ${size}: ${Math.round(confidence)}%`;
+    } else {
+      priceBadgeEl.textContent = `Size Oracle: ${size}`;
+      priceBadgeEl.title = `Size ${size} — no data available`;
+    }
+
+    // Insert after the price element's parent block
+    const insertTarget = priceElement.closest('.a-section') || priceElement.parentNode;
+    insertTarget.parentNode.insertBefore(priceBadgeEl, insertTarget.nextSibling);
   }
 
   // --- Profile & Communication ---
@@ -100,21 +292,11 @@ window.SizeOracle = window.SizeOracle || {};
     });
   }
 
-  async function saveToCacheAndHistory(result) {
-    chrome.runtime.sendMessage({
-      type: 'CACHE_RESULT',
-      result: {
-        ...result,
-        url: window.location.href,
-        timestamp: Date.now()
-      }
-    });
-  }
-
   // --- Floating Action Button (FAB) ---
+  // ALWAYS shows best result — never changes with page size selection
 
   function renderFAB(result) {
-    cleanupUI();
+    if (fabEl && fabEl.parentNode) fabEl.parentNode.removeChild(fabEl);
     
     fabEl = document.createElement('button');
     fabEl.className = 'so-fab';
@@ -132,38 +314,6 @@ window.SizeOracle = window.SizeOracle || {};
     });
 
     document.body.appendChild(fabEl);
-  }
-
-  // --- Price Point Badge ---
-
-  function renderPriceBadge(result) {
-    const priceSelectors = [
-      '[data-testid="price"]',
-      '.price',
-      '.current-price',
-      '.sale-price',
-      '.product-price',
-      '[class*="price"]',
-      '[id*="price"]'
-    ];
-
-    let priceElement = null;
-    for (const selector of priceSelectors) {
-      priceElement = document.querySelector(selector);
-      if (priceElement && priceElement.textContent.match(/[\$£€¥₹]/)) {
-        break;
-      }
-    }
-
-    if (!priceElement) return;
-
-    priceBadgeEl = document.createElement('span');
-    priceBadgeEl.className = 'so-price-badge';
-    priceBadgeEl.textContent = `Size Oracle: ${result.recommended} (${Math.round(result.confidence)}%)`;
-    priceBadgeEl.title = `Size Oracle: ${result.recommended} with ${Math.round(result.confidence)}% confidence`;
-
-    // Insert after the price element
-    priceElement.parentNode.insertBefore(priceBadgeEl, priceElement.nextSibling);
   }
 
   // --- Setup Badge ---
@@ -185,67 +335,11 @@ window.SizeOracle = window.SizeOracle || {};
     document.body.appendChild(setupBadgeEl);
   }
 
-  // --- Size Selector Enhancement ---
-
-  function enhanceSizeSelector(result, sizeData) {
-    if (!sizeData?.sizes) return;
-
-    const sizeButtons = document.querySelectorAll(
-      'button[class*="size"], .size-option, [data-size], .size-selector button, .size-btn'
-    );
-
-    sizeButtons.forEach(btn => {
-      const sizeText = btn.textContent.trim().toUpperCase();
-      const matchedSize = sizeData.sizes.find(s => 
-        s.size?.toUpperCase() === sizeText || 
-        s.label?.toUpperCase() === sizeText
-      );
-
-      if (matchedSize) {
-        btn.classList.add('so-size-option');
-        
-        // Calculate confidence for this specific size
-        const confidence = calculateSizeConfidence(matchedSize, result);
-        btn.setAttribute('data-confidence', `${Math.round(confidence)}%`);
-        
-        // Highlight recommended size
-        if (sizeText === result.size.toUpperCase()) {
-          btn.classList.add('so-size-option--recommended');
-        }
-      }
-    });
-  }
-
-  function calculateSizeConfidence(sizeData, originalResult) {
-    // Simplified confidence calculation - in real implementation, 
-    // this would use the same logic as the main size detection
-    if (!sizeData.chest) return originalResult.confidence;
-    
-    const profile = currentResult.profile;
-    if (!profile?.chest) return originalResult.confidence;
-    
-    const chestRange = sizeData.chest;
-    const userChest = profile.chest;
-    
-    // Calculate how close user measurement is to size range median
-    const rangeMedian = (chestRange.min + chestRange.max) / 2;
-    const rangeWidth = chestRange.max - chestRange.min;
-    const distance = Math.abs(userChest - rangeMedian);
-    
-    // Convert distance to confidence percentage
-    const maxDistance = rangeWidth * 1.5; // Allow some flexibility beyond range
-    const confidence = Math.max(0, 100 - (distance / maxDistance) * 100);
-    
-    return Math.min(100, confidence);
-  }
-
   // --- Utilities ---
 
   function cleanupUI() {
     [fabEl, priceBadgeEl, setupBadgeEl].forEach(el => {
-      if (el && el.parentNode) {
-        el.parentNode.removeChild(el);
-      }
+      if (el && el.parentNode) el.parentNode.removeChild(el);
     });
     fabEl = priceBadgeEl = setupBadgeEl = null;
   }
@@ -258,60 +352,35 @@ window.SizeOracle = window.SizeOracle || {};
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  // --- State Management ---
+  // --- Listeners ---
 
-  // Listen for profile updates to hide setup badge
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'PROFILE_UPDATED') {
       isSetupComplete = true;
-      if (setupBadgeEl) {
-        cleanupUI();
-        init(); // Re-initialize with new profile
+      cleanupUI();
+      init();
+    } else if (message.type === 'GET_SIZE_RESULT') {
+      if (bestResult) {
+        sendResponse({ size: bestResult.recommended, confidence: bestResult.confidence });
+      } else {
+        sendResponse(null);
       }
-    } else if (message.type === 'SIZE_CHANGED') {
-      // Handle dynamic size changes from enhanced size selector
-      if (currentResult && message.size) {
-        const updatedResult = {
-          ...currentResult,
-          size: message.size,
-          confidence: message.confidence || currentResult.confidence
-        };
-        
-        // Update FAB display
-        if (fabEl) {
-          const sizeEl = fabEl.querySelector('.so-fab-size');
-          const confidenceEl = fabEl.querySelector('.so-fab-confidence');
-          if (sizeEl) sizeEl.textContent = updatedResult.size;
-          if (confidenceEl) confidenceEl.textContent = `${Math.round(updatedResult.confidence)}%`;
-        }
-        
-        // Update price badge
-        if (priceBadgeEl) {
-          priceBadgeEl.textContent = `(${updatedResult.size}) ${Math.round(updatedResult.confidence)}%`;
-        }
-        
-        currentResult = updatedResult;
-        updateBackgroundBadge(updatedResult.confidence, updatedResult.size);
-      }
+      return true;
     }
   });
 
   // --- Page Change Detection ---
 
-  // Handle SPA navigation and dynamic content changes
   let lastUrl = window.location.href;
-  const observer = new MutationObserver((mutations) => {
+  const navObserver = new MutationObserver(() => {
     const currentUrl = window.location.href;
     if (currentUrl !== lastUrl) {
       lastUrl = currentUrl;
-      setTimeout(init, 1000); // Re-initialize on navigation
+      setTimeout(init, 1000);
     }
   });
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
+  navObserver.observe(document.body, { childList: true, subtree: true });
 
   // --- Initialize ---
 
@@ -321,14 +390,7 @@ window.SizeOracle = window.SizeOracle || {};
     init();
   }
 
-  // Expose for debugging
   if (typeof window !== 'undefined') {
-    window.SizeOracle.overlay = {
-      init,
-      renderFAB,
-      renderPriceBadge,
-      renderSetupBadge,
-      cleanupUI
-    };
+    window.SizeOracle.overlay = { init, cleanupUI };
   }
 })();
