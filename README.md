@@ -1,186 +1,92 @@
-# Size Oracle — Universal Size Advisor v3.0
+# 🔮 Size Oracle — Universal Size Advisor
 
-> A privacy-first Chrome extension that recommends your clothing size on major shopping sites — all processing happens locally on your device.
+**Privacy-first Chrome extension that recommends your clothing size on 100+ shopping sites. All processing happens locally — your measurements never leave your device.**
 
-<!-- ![Size-Oracle Logo](icons/icon128.png) -->
+![Chrome MV3](https://img.shields.io/badge/Chrome-Manifest_V3-4285F4?style=flat-square&logo=googlechrome&logoColor=white)
+![License](https://img.shields.io/badge/License-Non--Commercial-red?style=flat-square)
 
-## What's New in v3.0
-
-### Minimalist UI Overhaul  
-- **Native Chrome Design** — Clean dark mode styling with system fonts
-- **Minimalist Interface** — Primary view shows only size and confidence percentage
-- **Three-dot Menu** — Hidden menu for saved measurements, history, and settings
-
-### Smart Fit Intelligence
-- **Auto-Detection** — Automatically scans e-commerce pages for size charts and tables  
-- **Difference-from-Median Algorithm** — Precise scoring based on distance from size range medians
-- **Body Shape Analysis** — Personalized recommendations based on your proportions
-
-### Profile Management
-- **Simple Setup** — Enter chest, waist, and hips measurements
-- **Unit Toggle** — Switch between inches and centimeters
-- **Category Toggle** — Support for both men's and women's sizes
+---
 
 ## Features
 
-### Core Functionality
-- **Smart Size Recommendations** — Automatically detects size charts and matches them to your measurements
-- **Multi-Measurement Matching** — Compares chest, waist, and hips with precise scoring
-- **Universal Support** — Works on 100+ shopping sites including Amazon, Zara, H&M, ASOS, SHEIN, Nike, and more
-- **100% Private** — All data stored locally in your browser. Zero network requests. Zero tracking.
+- **Smart Size Recommendations** — Automatically detects size charts and matches to your measurements
+- **Numeric & Letter Size Support** — Shows size numbers (0, 2, 4, 6...) on sites like H&M and Zara, letters (S, M, L) everywhere else — automatically
+- **Multi-Profile Support** — Save profiles for yourself, partner, kids — switch instantly
+- **Body Shape Analysis** — Personalized recommendations based on your proportions (hourglass, pear, apple, athletic)
+- **Multi-Measurement Matching** — Chest, waist, hips, inseam, and shoe size with weighted scoring
+- **Fit Preference** — Fitted, Regular, or Relaxed — adjusts recommendations accordingly
+- **100% Private** — All data stored locally. Zero network requests. Zero tracking.
 
-### Advanced Features
-- **Unit Conversion** — Seamlessly switch between inches and centimeters
-- **Enhanced Confidence Scoring** — See exactly how well each size matches with detailed breakdowns
-- **Smart Recommendations** — Body shape-aware suggestions and fit preference guidance
-- **Auto-Save** — Measurements automatically save as you type
+## How It Works
 
-### User Experience
-- **Chrome Native Design** — Clean dark mode interface matching Chrome's built-in styling
-- **🎪 Non-Intrusive UI** — Floating confidence indicator and expandable details
-- **👤 Profile Management** — Add, rename, and delete multiple user profiles
-- **📈 Recommendation History** — Track your past size recommendations
+### On the Page
+- **Price Badge** — Confidence score for the **currently selected size** appears right below the product price
+- **Floating Button (FAB)** — Bottom-right corner always shows your **best matching size** with highest confidence (stays fixed regardless of what size you select)
+- Sites using number sizes (H&M, Zara bottoms, Gap, Levi's, etc.) automatically show numeric recommendations instead of letters
+
+### In the Popup
+- Click the extension icon or FAB to open the **measurement dashboard**
+- Enter body measurements (chest, waist, hips, inseam) and shoe size
+- Switch between profiles, units (inches/cm), gender, and fit preference
+
+## Numeric Size Intelligence
+
+Size Oracle automatically detects whether a site uses letter sizes (S, M, L) or numeric sizes (0, 2, 4, 6...) and displays the recommendation in the format the site actually uses:
+
+| Site | Size Format | Example Output |
+|------|------------|----------------|
+| Amazon | Letters | `M (85%)` |
+| Nike | Letters | `L (92%)` |
+| H&M | US Numbers | `8-10 (77%)` |
+| Zara (bottoms) | EU Numbers | `40-42 (81%)` |
+| Levi's | US Numbers | `32-34 (88%)` |
+| Gap (bottoms) | US Numbers | `8-10 (77%)` |
+
+No configuration needed — it just works.
+
+## Supported Sites (100+)
+
+**Major E-commerce:** Amazon, SHEIN, Temu, AliExpress, eBay, Walmart, Target, Etsy  
+**Fast Fashion:** Zara, H&M, Uniqlo, Forever 21, Mango, Pull & Bear, Bershka  
+**Department Stores:** Nordstrom, Macy's, Bloomingdale's, JCPenney, Kohl's  
+**Athletic:** Nike, Adidas, Under Armour, Lululemon, Gymshark, Fabletics  
+**Casual:** Levi's, Gap, Old Navy, American Eagle, Abercrombie, Express  
+**Premium:** SSENSE, Farfetch, Net-A-Porter, Revolve, Shopbop  
+**Luxury:** Gucci, Louis Vuitton, Prada, Burberry, Balenciaga  
+**Plus Size:** Torrid, Lane Bryant, Eloquii  
+**Shoes:** Zappos, DSW, Foot Locker, Steve Madden  
 
 ## Installation
 
 1. Clone or download this repository
-2. Open Chrome and navigate to `chrome://extensions/`
-3. Enable **Developer mode** (toggle in top-right)
-4. Click **Load unpacked** and select the `Size-Oracle/` folder
-5. The extension icon should appear in your toolbar
+2. Open `chrome://extensions/`
+3. Enable **Developer mode** (top-right)
+4. Click **Load unpacked** → select the `Size-Oracle/` folder
 
-## How It Works
+## Scoring Algorithm
 
-### 1. Set Up Your Profile(s)
-- Click the Size-Oracle extension icon
-- Choose a profile (Self, Partner, or create custom)
-- Enter your measurements: chest, waist, hips, inseam, height, shoe size
-- Select your preferred fit (Fitted, Regular, Relaxed)
+Uses a **difference-from-median** scoring system with weighted measurements:
 
-### 2. Shop with Confidence
-- Browse any supported clothing site
-- Size-Oracle automatically detects size information
-- View your confidence ring showing prediction accuracy
-- See dynamic fit visualizations for each measurement
+| Measurement | Weight |
+|-------------|--------|
+| Chest | 40% |
+| Waist | 35% |
+| Hips | 20% |
+| Inseam | 5% |
 
-### 3. Get Smart Recommendations
-- Receive contextual fit descriptions (Snug, Perfect, Roomy)
-- Get body shape-specific advice
-- View detailed breakdowns of why each size was recommended
-
-### Enhanced Scoring System
-
-| Fit Level | Description | Visual Indicator |
-|-----------|-------------|------------------|
-| Perfect Fit | Within optimal range | ✅ Green confidence ring |
-| Snug Fit | Lower end of size range | 🟡 Yellow with "Snug" label |
-| Roomy Fit | Upper end of size range | 🔵 Blue with "Roomy" label |
-| Size Up | Below size range | ⚠️ Orange warning |
-| Size Down | Above size range | ⚠️ Orange warning |
-
-### Body Shape Intelligence
-Size-Oracle analyzes your measurements to provide shape-specific advice:
-- **Hourglass**: Balanced proportions, most fits work well
-- **Pear**: Hip-focused sizing with waist considerations
-- **Apple**: Chest/waist focused recommendations
-- **Athletic**: Slightly relaxed fits preferred
-- **Rectangle**: Proportional sizing across measurements
-
-## Supported Sites (100+)
-
-### Major E-commerce
-- **Amazon** (`amazon.com`, `amazon.co.uk`, etc.)
-- **SHEIN** (`shein.com`)
-- **Temu** (`temu.com`)
-- **AliExpress** (`aliexpress.com`)
-- **eBay** (`ebay.com`)
-
-### Fast Fashion
-- **Zara** (`zara.com`)
-- **H&M** (`hm.com`)
-- **Uniqlo** (`uniqlo.com`)
-- **Forever 21** (`forever21.com`)
-- **Pull & Bear** (`pull-and-bear.com`)
-
-### Department Stores
-- **Nordstrom** (`nordstrom.com`)
-- **Macy's** (`macys.com`)
-- **Target** (`target.com`)
-- **Walmart** (`walmart.com`)
-
-### Athletic Brands
-- **Nike** (`nike.com`)
-- **Adidas** (`adidas.com`)
-- **Under Armour** (`underarmour.com`)
-- **Lululemon** (`lululemon.com`)
-
-### Premium & Luxury
-- **SSENSE** (`ssense.com`)
-- **Farfetch** (`farfetch.com`)
-- **Net-A-Porter** (`net-a-porter.com`)
-
-*And 80+ more sites with universal size chart detection*
+Confidence is calibrated so that a perfect match scores ~98%, and ±2 inches from median scores ~40%.
 
 ## Privacy
 
-**Size-Oracle v2.0 remains 100% private.** Your measurements are stored in `chrome.storage.local` on your device and never transmitted anywhere. The new auto-detection features work entirely client-side. There are no analytics, no tracking, no external API calls. See [PRIVACY.md](PRIVACY.md) for the full privacy policy.
+Your measurements are stored in `chrome.storage.local` and never transmitted anywhere. No analytics, no tracking, no external API calls. See [PRIVACY.md](PRIVACY.md).
 
 ## Tech Stack
 
-- **Manifest V3** Chrome Extension
-- **Vanilla JavaScript** (no dependencies)
-- **Modern CSS** with glassmorphism effects
-- **Chrome Storage API** for local data persistence
-- **Advanced DOM parsing** for universal size detection
-
-## v2.0 Technical Improvements
-
-### Enhanced Auto-Detection
-- **Multi-strategy scanning** — Tables, modals, JSON-LD, known patterns
-- **Smart keyword matching** — Detects size information in any language
-- **Dynamic content handling** — Works with SPAs and lazy-loaded content
-
-### Improved Performance
-- **Efficient caching** — Size charts cached for faster subsequent visits
-- **Background processing** — Non-blocking size detection
-- **Memory optimization** — Minimal resource usage
-
-### Code Architecture
-- **Modular design** — Separated concerns for UI, detection, and matching
-- **Error resilience** — Graceful degradation on unsupported sites
-- **Extensible patterns** — Easy to add new site support
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.
-
-### Development Setup
-1. Fork the repository
-2. Make your changes
-3. Test on multiple supported sites
-4. Ensure all functionality works
-5. Submit a pull request
-
-## Changelog
-
-### v2.0.0 (Latest)
-- ✨ **UI/UX Overhaul**: Glassmorphism design with dynamic fit visualization
-- 🧠 **Smart Mapping**: Enhanced fit descriptions and body shape analysis
-- 👥 **Multi-Profile Support**: Multiple user profiles with quick switching
-- 🔍 **Auto-Detection**: Automatic size chart scanning and detection
-- 📊 **Visual Indicators**: Confidence rings and fit range sliders
-- 🎨 **Modern Design**: Purple crystal ball branding with blur effects
-
-### v1.0.0
-- Initial release with basic size recommendations
-- Support for major shopping sites
-- Privacy-focused local storage
-
-## License
-
-[MIT License](LICENSE)
+- Chrome Extension (Manifest V3)
+- Vanilla JavaScript (zero dependencies)
+- Chrome Storage API for local persistence
+- DOM mutation observers for real-time size detection
 
 ---
 
-**Built with 💜 by Varun Meda**  
-*Making online shopping stress-free, one size at a time*
+**Built by [Varun Meda](https://github.com/VMaroon95)** — making online shopping stress-free, one size at a time.

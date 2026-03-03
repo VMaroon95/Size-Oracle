@@ -91,17 +91,33 @@ window.SizeOracle = window.SizeOracle || {};
     bestResult = result;
     allResults = allSizeResults || [{ size: result.recommended, confidence: result.confidence }];
 
-    // FAB always shows best result
-    renderFAB(bestResult);
+    // Convert to numeric display if site uses numeric sizes
+    const gender = profile.gender || 'mens';
+    const garmentType = detectGarmentType();
+    const displaySize = window.SizeOracle.numericSites?.getDisplaySize(bestResult.recommended, gender, garmentType) || bestResult.recommended;
+
+    // FAB always shows best result (in site-appropriate format)
+    renderFAB({ ...bestResult, displaySize });
 
     // Price badge shows score for currently selected size on page
     const selectedSize = detectSelectedSize();
-    renderPriceBadgeForSize(selectedSize);
+    renderPriceBadgeForSize(selectedSize, gender, garmentType);
 
-    updateBackgroundBadge(bestResult.confidence, bestResult.recommended);
+    updateBackgroundBadge(bestResult.confidence, displaySize);
 
     // Watch for size selection changes on the page
-    watchSizeSelectors();
+    watchSizeSelectors(gender, garmentType);
+  }
+
+  // --- Garment type detection ---
+
+  function detectGarmentType() {
+    const text = (document.title + ' ' + window.location.pathname).toLowerCase();
+    const bottomsKeywords = ['pant', 'jean', 'trouser', 'short', 'skirt', 'legging', 'bottom', 'jogger', 'chino', 'denim', 'slack'];
+    const shoesKeywords = ['shoe', 'sneaker', 'boot', 'sandal', 'loafer', 'heel', 'flat', 'slipper'];
+    if (bottomsKeywords.some(k => text.includes(k))) return 'bottoms';
+    if (shoesKeywords.some(k => text.includes(k))) return 'shoes';
+    return 'tops';
   }
 
   // --- Detect which size the user has selected on the page ---
@@ -168,7 +184,7 @@ window.SizeOracle = window.SizeOracle || {};
 
   // --- Watch for size changes on the page ---
 
-  function watchSizeSelectors() {
+  function watchSizeSelectors(gender, garmentType) {
     // Observe DOM mutations for size selection changes
     if (sizeObserver) sizeObserver.disconnect();
 
@@ -176,7 +192,7 @@ window.SizeOracle = window.SizeOracle || {};
       const newSize = detectSelectedSize();
       if (newSize && newSize !== lastSelectedSize) {
         lastSelectedSize = newSize;
-        renderPriceBadgeForSize(newSize);
+        renderPriceBadgeForSize(newSize, gender, garmentType);
       }
     });
 
@@ -195,7 +211,7 @@ window.SizeOracle = window.SizeOracle || {};
         const newSize = detectSelectedSize();
         if (newSize && newSize !== lastSelectedSize) {
           lastSelectedSize = newSize;
-          renderPriceBadgeForSize(newSize);
+          renderPriceBadgeForSize(newSize, gender, garmentType);
         }
       }, 300);
     }, true);
@@ -203,23 +219,31 @@ window.SizeOracle = window.SizeOracle || {};
 
   // --- Render price badge for a specific selected size ---
 
-  function renderPriceBadgeForSize(selectedSize) {
+  function renderPriceBadgeForSize(selectedSize, gender, garmentType) {
     // Remove old badge
     if (priceBadgeEl && priceBadgeEl.parentNode) {
       priceBadgeEl.parentNode.removeChild(priceBadgeEl);
       priceBadgeEl = null;
     }
 
+    const g = gender || currentProfile?.gender || 'mens';
+    const gt = garmentType || detectGarmentType();
+    const mapper = window.SizeOracle.numericSites;
+
     if (!allResults || !selectedSize) {
       // No selected size detected — show best result
-      if (bestResult) renderPriceBadge(bestResult.recommended, bestResult.confidence);
+      if (bestResult) {
+        const display = mapper?.getDisplaySize(bestResult.recommended, g, gt) || bestResult.recommended;
+        renderPriceBadge(display, bestResult.confidence);
+      }
       return;
     }
 
     // Find the score for the selected size
     const match = allResults.find(r => r.size.toUpperCase() === selectedSize.toUpperCase());
     if (match) {
-      renderPriceBadge(match.size, match.confidence);
+      const display = mapper?.getDisplaySize(match.size, g, gt) || match.size;
+      renderPriceBadge(display, match.confidence);
     } else {
       // Size not in our chart — still show it with "?"
       renderPriceBadge(selectedSize, null);
@@ -300,7 +324,7 @@ window.SizeOracle = window.SizeOracle || {};
     
     fabEl = document.createElement('button');
     fabEl.className = 'so-fab';
-    const sizeLabel = result.recommended || result.size || '?';
+    const sizeLabel = result.displaySize || result.recommended || result.size || '?';
     const confLabel = Math.round(result.confidence || 0);
     fabEl.innerHTML = `
       <div class="so-fab-size">${sizeLabel}</div>
