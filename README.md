@@ -89,4 +89,10 @@ Your measurements are stored in `chrome.storage.local` and never transmitted any
 
 ---
 
+## Attribution
+
+- [Measuring-tape icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/measuring-tape)
+
+---
+
 **Built by [Varun Meda](https://github.com/VMaroon95)** — making online shopping stress-free, one size at a time.
