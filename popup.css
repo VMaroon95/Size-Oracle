@@ -37,6 +37,17 @@ header h1 {
   color: #e8eaed;
   margin-bottom: 4px;
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  font-family: 'Century', 'Century Schoolbook', 'Georgia', serif;
+}
+
+.header-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: -1px;
+  vertical-align: middle;
+  border-radius: 4px;
 }
 
 .subtitle {

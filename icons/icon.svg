@@ -1,6 +1,7 @@
 <svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
   <!-- Background -->
   <rect width="128" height="128" fill="#202124" rx="16"/>
+  <g transform="translate(128,0) scale(-1,1)">
   
   <!-- Girl Silhouette -->
   <path d="M64 24 
@@ -72,5 +73,6 @@
     <rect x="42.5" y="82" width="3" height="1"/>
     <rect x="42.5" y="90" width="3" height="1"/>
     <rect x="42.5" y="98" width="3" height="1"/>
+  </g>
   </g>
 </svg>

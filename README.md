@@ -92,6 +92,7 @@ Your measurements are stored in `chrome.storage.local` and never transmitted any
 ## Attribution
 
 - [Measuring-tape icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/measuring-tape)
+- Size Oracle icon: Custom icon designed for Size Oracle (silhouette with measuring tape)
 
 ---
 
