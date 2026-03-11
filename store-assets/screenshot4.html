@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>
+body{margin:0;width:1280px;height:800px;background:#000;font-family:-apple-system,BlinkMacSystemFont,sans-serif;position:relative;overflow:hidden}
+.browser{width:100%;height:100%;background:#fff}
+.urlbar{background:#292a2d;padding:8px 16px;display:flex;align-items:center;gap:10px}
+.urlbar .dots{display:flex;gap:6px}
+.urlbar .dot{width:12px;height:12px;border-radius:50%;background:#3c4043}
+.urlbar .dot.r{background:#f28b82}.urlbar .dot.y{background:#fdd663}.urlbar .dot.g{background:#81c995}
+.urlbar .bar{flex:1;background:#3c4043;border-radius:20px;padding:6px 16px;color:#9aa0a6;font-size:13px}
+.page{display:flex;height:calc(100% - 44px);background:#fff}
+.sidebar{width:440px;background:#f7f7f7;display:flex;align-items:center;justify-content:center;border-right:1px solid #e8e8e8}
+.prod-placeholder{width:340px;height:420px;background:linear-gradient(135deg,#1a1a1a,#333);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:56px}
+.main{flex:1;padding:28px 32px;position:relative}
+.shein-logo{font-size:24px;font-weight:800;letter-spacing:2px;color:#222;margin-bottom:20px}
+.prod-title{font-size:16px;color:#222;line-height:1.5;margin-bottom:10px}
+.stars{color:#222;font-size:13px;margin-bottom:10px}
+.stars span{color:#f5a623}
+.price{font-size:26px;color:#e4393c;font-weight:700;margin-bottom:20px}
+.size-section{margin-bottom:16px}
+.size-label{font-size:14px;color:#222;font-weight:600;margin-bottom:10px}
+.sizes{display:flex;gap:8px;flex-wrap:wrap}
+.sz{padding:10px 20px;border:1px solid #e0e0e0;border-radius:0;font-size:13px;color:#222;background:#fff}
+.sz.active{border:2px solid #222;background:#f5f5f5;font-weight:600}
+.color-section{margin-bottom:20px}
+.color-label{font-size:14px;color:#222;font-weight:600;margin-bottom:8px}
+.colors{display:flex;gap:8px}
+.color-dot{width:28px;height:28px;border-radius:50%;border:2px solid transparent}
+.color-dot.active{border-color:#222}
+/* Oracle overlay */
+.oracle-overlay{margin-top:24px;background:#202124;border-radius:10px;padding:14px 18px;box-shadow:0 4px 16px rgba(0,0,0,.15);display:flex;align-items:center;gap:14px;max-width:380px}
+.oracle-icon{width:36px;height:36px;border-radius:8px}
+.oracle-text h4{color:#8ab4f8;font-size:14px;margin:0 0 4px;font-weight:500}
+.oracle-text p{color:#e8eaed;font-size:13px;margin:0;line-height:1.4}
+.oracle-text .conf{color:#81c995;font-size:12px;margin-top:4px}
+.badge-tag{position:absolute;top:54px;right:20px;background:#202124;color:#8ab4f8;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+</style></head><body>
+<div class="browser">
+<div class="urlbar"><div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div><div class="bar">🔒 shein.com/Women-Oversized-Hoodie-p-12345.html</div></div>
+<div class="page">
+<div class="sidebar"><div class="prod-placeholder">👗</div></div>
+<div class="main">
+<div class="shein-logo">SHEIN</div>
+<div class="prod-title">Women Oversized Drawstring Hoodie Casual Long Sleeve Pullover</div>
+<div class="stars"><span>★★★★</span>★ 4.6 · 8,234 reviews</div>
+<div class="price">$18.49</div>
+<div class="color-section">
+<div class="color-label">Color:</div>
+<div class="colors">
+<div class="color-dot active" style="background:#2d2d2d"></div>
+<div class="color-dot" style="background:#c4a882"></div>
+<div class="color-dot" style="background:#8b4557"></div>
+<div class="color-dot" style="background:#4a6741"></div>
+</div>
+</div>
+<div class="size-section">
+<div class="size-label">Size:</div>
+<div class="sizes">
+<div class="sz">XS</div>
+<div class="sz">S</div>
+<div class="sz active">M ✓</div>
+<div class="sz">L</div>
+<div class="sz">XL</div>
+</div>
+</div>
+<div class="oracle-overlay">
+<img src="../icons/icon128.png" class="oracle-icon">
+<div class="oracle-text">
+<h4>Size Oracle Recommends: M</h4>
+<p>Based on your chest (36") and hips (38") — Regular fit</p>
+<div class="conf">✓ 88% confidence · SHEIN runs slightly small</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="badge-tag">🔮 Size Oracle Active</div>
+</body></html>

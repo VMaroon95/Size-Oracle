@@ -7,16 +7,16 @@ Size Oracle — Universal Size Advisor
 Privacy-first size advisor for 100+ stores. Enter your measurements once, get accurate size recommendations everywhere. 100% local.
 
 ## Description
-Stop guessing your size when shopping online. Size Oracle recommends your perfect clothing and shoe size on 100+ popular stores — from Nike and Zara to Amazon and Gucci.
+Stop guessing your size when shopping online. Size Oracle recommends your perfect clothing and shoe size across 100+ popular retailers — automatically.
 
 🔒 PRIVACY FIRST
 All your measurements are stored locally on your device. Nothing is ever sent to any server. Zero tracking. Zero data collection.
 
 🛍️ 100+ SUPPORTED STORES
-Works automatically on Nike, Adidas, Zara, H&M, ASOS, Amazon, Nordstrom, Levi's, Gucci, Uniqlo, Lululemon, and 90+ more retailers.
+Works automatically on popular clothing, sportswear, fast fashion, luxury, and marketplace retailers. See the full list on our GitHub page.
 
 🎯 SMART SIZE SCORING
-• Brand-specific size adjustments (Nike runs small, H&M runs large, etc.)
+• Brand-specific size adjustments (accounts for how each brand fits)
 • Choose your fit preference: Fitted, Regular, or Relaxed
 • Supports Men's and Women's sizing
 • Multiple measurement profiles (for partners, kids, etc.)

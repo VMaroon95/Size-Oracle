@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>
+body{margin:0;width:1280px;height:800px;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,sans-serif;position:relative;overflow:hidden}
+.browser{width:100%;height:100%;background:#fff}
+.urlbar{background:#292a2d;padding:8px 16px;display:flex;align-items:center;gap:10px}
+.urlbar .dots{display:flex;gap:6px}
+.urlbar .dot{width:12px;height:12px;border-radius:50%;background:#3c4043}
+.urlbar .dot.r{background:#f28b82}.urlbar .dot.y{background:#fdd663}.urlbar .dot.g{background:#81c995}
+.urlbar .bar{flex:1;background:#3c4043;border-radius:20px;padding:6px 16px;color:#9aa0a6;font-size:13px}
+.page{display:flex;height:calc(100% - 44px)}
+.sidebar{width:420px;background:#fff;padding:24px;border-right:1px solid #e0e0e0}
+.sidebar img.prod{width:100%;height:320px;background:linear-gradient(135deg,#232f3e,#37475a);border-radius:8px;display:flex;align-items:center;justify-content:center;object-fit:cover}
+.prod-placeholder{width:100%;height:320px;background:linear-gradient(135deg,#232f3e,#37475a);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:48px}
+.main{flex:1;padding:24px 32px}
+.amazon-logo{color:#ff9900;font-size:28px;font-weight:700;margin-bottom:16px}
+.prod-title{font-size:18px;color:#0f1111;line-height:1.4;margin-bottom:8px}
+.stars{color:#de7921;font-size:14px;margin-bottom:8px}
+.price{font-size:28px;color:#0f1111;margin-bottom:16px}.price span{font-size:14px;vertical-align:super}
+.size-section{margin-bottom:16px}
+.size-label{font-size:14px;color:#0f1111;font-weight:700;margin-bottom:8px}
+.sizes{display:flex;gap:8px;flex-wrap:wrap}
+.sz{padding:8px 16px;border:1px solid #d5d9d9;border-radius:8px;font-size:14px;color:#0f1111;background:#fff;cursor:pointer}
+.sz.active{border:2px solid #007185;background:#edfdff}
+/* Size Oracle overlay */
+.oracle-overlay{margin-top:20px;background:#202124;border-radius:10px;padding:14px 18px;box-shadow:0 4px 16px rgba(0,0,0,.15);display:flex;align-items:center;gap:14px;max-width:380px}
+.oracle-icon{width:36px;height:36px;border-radius:8px}
+.oracle-text h4{color:#8ab4f8;font-size:14px;margin:0 0 4px;font-weight:500}
+.oracle-text p{color:#e8eaed;font-size:13px;margin:0;line-height:1.4}
+.oracle-text .conf{color:#81c995;font-size:12px;margin-top:4px}
+.badge-tag{position:absolute;top:54px;right:20px;background:#202124;color:#8ab4f8;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+</style></head><body>
+<div class="browser">
+<div class="urlbar"><div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div><div class="bar">🔒 amazon.com/dp/B09XYZ-mens-slim-fit-shirt</div></div>
+<div class="page">
+<div class="sidebar"><div class="prod-placeholder">👕</div></div>
+<div class="main">
+<div class="amazon-logo">amazon</div>
+<div class="prod-title">Men's Slim-Fit Long-Sleeve Casual Button-Down Shirt<br><span style="color:#565959;font-size:13px">by Goodthreads</span></div>
+<div class="stars">★★★★☆ 4.3 · 12,847 ratings</div>
+<div class="price"><span>$</span>29<span>.99</span></div>
+<div class="size-section">
+<div class="size-label">Size:</div>
+<div class="sizes">
+<div class="sz">S</div>
+<div class="sz active">M ✓</div>
+<div class="sz">L</div>
+<div class="sz">XL</div>
+<div class="sz">XXL</div>
+</div>
+</div>
+<div class="oracle-overlay">
+<img src="../icons/icon128.png" class="oracle-icon">
+<div class="oracle-text">
+<h4>Size Oracle Recommends: M</h4>
+<p>Based on your chest (40") and waist (34") — Regular fit</p>
+<div class="conf">✓ 92% confidence · Brand runs true to size</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="badge-tag">🔮 Size Oracle Active</div>
+</body></html>

@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Size Oracle — Universal Size Advisor",
-  "version": "3.2.0",
+  "version": "3.2.2",
   "description": "Privacy-first size advisor for 100+ stores. Enter measurements once, get accurate sizes everywhere.",
-  "permissions": ["storage", "activeTab", "scripting"],
+  "permissions": ["storage", "activeTab"],
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "popup.html",
